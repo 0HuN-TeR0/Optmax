@@ -1,6 +1,8 @@
+from flask import request, jsonify
+from flask_login import current_user, login_required
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from extensions import db
-from models import User, GPU, Blog,Preference
+from extensions import db, migrate
+from models import User, GPU, Blog, Preference
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, FloatField, TextAreaField
 from wtforms.validators import InputRequired, Email, EqualTo, NumberRange
@@ -22,18 +24,21 @@ import bcrypt
 from wtforms import StringField, PasswordField, SubmitField, SelectField
 from wtforms.validators import DataRequired, Email, EqualTo
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
+
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or '486837'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://postgres:486837@localhost/opt-max'
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        'DATABASE_URL') or 'postgresql://postgres:1234@localhost/opt-max'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = 'static/uploads'
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
-import pandas as pd
-from sqlalchemy import func
+migrate.init_app(app, db)
 
 def load_gpu_data():
     with app.app_context():
@@ -156,13 +161,14 @@ def recommend_gpu(user_input, user=None):
 
     return recommendations
 
-
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin'),('general','General')], validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[
+                                     DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[(
+        'user', 'User'), ('admin', 'Admin'), ('general', 'General')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 
@@ -170,12 +176,15 @@ class LoginForm(FlaskForm):
     email = StringField('Email', validators=[InputRequired(), Email()])
     password = PasswordField('Password', validators=[InputRequired()])
 
+
 class GPUForm(FlaskForm):
     name = StringField('Name', validators=[InputRequired()])
     specs = TextAreaField('Specs', validators=[InputRequired()])
-    price = FloatField('Price', validators=[InputRequired(), NumberRange(min=0)])
-    image = StringField('Image URL') # Placeholder for file upload handling
-    
+    price = FloatField('Price', validators=[
+                       InputRequired(), NumberRange(min=0)])
+    image = StringField('Image URL')  # Placeholder for file upload handling
+
+
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -213,11 +222,12 @@ def home():
 #     } for gpu in gpus]
 #     more_gpus = GPU.query.count() > offset + limit
 #     next_offset = offset + limit if more_gpus else None
-    
-#     return render_template('gpus.html', 
-#                            gpus=gpu_data, 
-#                            more_gpus=more_gpus, 
+
+#     return render_template('gpus.html',
+#                            gpus=gpu_data,
+#                            more_gpus=more_gpus,
 #                            next_offset=next_offset)
+
 
 @app.route('/gpus', methods=['GET'])
 def gpus():
@@ -225,7 +235,7 @@ def gpus():
     limit = request.args.get('limit', default=6, type=int)
     gpus = GPU.query.offset(offset).limit(limit).all()
     gpu_data = [{
-         'id': gpu.id,
+        'id': gpu.id,
         'manufacturer': gpu.manufacturer,
         'productname': gpu.productname,
         'price': gpu.price,
@@ -252,14 +262,16 @@ def gpus():
         'category': gpu.category
     } for gpu in gpus]
     more_gpus = GPU.query.count() > offset + limit
-    
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify(gpus=gpu_data, more_gpus=more_gpus)
     else:
-        return render_template('gpus.html', 
-                               gpus=gpu_data, 
-                               more_gpus=more_gpus, 
+        return render_template('gpus.html',
+                               gpus=gpu_data,
+                               more_gpus=more_gpus,
                                next_offset=offset + limit if more_gpus else None)
+
+
 @app.route('/gpu/<int:id>', methods=['GET'])
 def gpu_details(id):
     gpu = GPU.query.get_or_404(id)
@@ -323,6 +335,7 @@ def gpus_details(id):
     }
     return render_template('gpu_details.html', gpu=gpu_data)
 
+
 @app.route('/add_gpu', methods=['POST'])
 def add_gpu():
     data = request.form
@@ -360,7 +373,7 @@ def add_gpu():
 @app.route('/blogs')
 def blogs():
     blogs = Blog.query.all()
-    
+
     # Convert blog objects to dictionaries with all necessary fields
     blog_list = []
     for blog in blogs:
@@ -373,8 +386,9 @@ def blogs():
             'image_url': blog.image_url  # Assuming you have an image_url field
         }
         blog_list.append(blog_dict)
-    
+
     return render_template('blogs.html', blogs=blog_list)
+
 
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
@@ -463,7 +477,6 @@ def for_you():
         # Ensure all inputs are valid numbers
         user_input = [float(x) if isinstance(x, (int, float)) else 0 for x in user_input]
         recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType','details_link']].to_html(escape=False)
-
     return render_template('for_you.html',
                            price_ranges=price_ranges,
                            mem_size_range=mem_size_range,
@@ -474,8 +487,7 @@ def for_you():
                            mem_type_range=mem_type_range,
                            recommendations=recommendations,
                            predefined_profiles=predefined_profiles)
-from flask import request, jsonify
-from flask_login import current_user, login_required
+
 
 @app.route('/save_preferences', methods=['POST'])
 @login_required
@@ -490,7 +502,8 @@ def save_preferences():
         mem_type = request.form.get('mem_type')
 
         # Check if the user already has preferences
-        preference = Preference.query.filter_by(user_id=current_user.id).first()
+        preference = Preference.query.filter_by(
+            user_id=current_user.id).first()
 
         if preference:
             # Update existing preferences
@@ -522,6 +535,7 @@ def save_preferences():
         print(f"Error saving preferences: {str(e)}")
         return jsonify(success=False), 500
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -533,6 +547,8 @@ def login():
             return redirect(url_for('profile'))
         flash('Invalid email or password', 'danger')
     return render_template('login.html', form=form)
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegistrationForm()
@@ -541,10 +557,11 @@ def register():
         if existing_user:
             flash('Email already registered. Please use a different email.', 'danger')
             return render_template('register.html', form=form)
-        
+
         hashed_password = generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, email=form.email.data, password=hashed_password, role=form.role.data)
-        
+        new_user = User(username=form.username.data, email=form.email.data,
+                        password=hashed_password, role=form.role.data)
+
         try:
             db.session.add(new_user)
             db.session.commit()
@@ -554,12 +571,15 @@ def register():
             db.session.rollback()
             flash('An error occurred. Please try again.', 'danger')
             app.logger.error(f"Error during registration: {str(e)}")
-    
+
     return render_template('register.html', form=form)
+
+
 def logout():
     session.pop('user_id', None)
     flash('You have been logged out', 'info')
     return redirect(url_for('home'))
+
 
 @app.route('/profile')
 def profile():
@@ -568,6 +588,7 @@ def profile():
         return redirect(url_for('login'))
     user = User.query.get(session['user_id'])
     return render_template('profile.html', user=user)
+
 
 if __name__ == '__main__':
     with app.app_context():

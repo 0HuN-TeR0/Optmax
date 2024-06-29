@@ -10,6 +10,7 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)
     preferences = db.relationship('Preference', backref='users', lazy=True)
 
+
 class Preference(db.Model):
     __tablename__ = 'preferences'
     id = db.Column(db.Integer, primary_key=True)
@@ -22,9 +23,6 @@ class Preference(db.Model):
     release_year = db.Column(db.Integer)
     mem_type = db.Column(db.String(50))
 
-
-
-from extensions import db
 
 class GPU(db.Model):
     __tablename__ = 'gpu_data'
