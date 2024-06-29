@@ -140,7 +140,8 @@
             font-size: 2rem;
         }
     }
-        .add-blog-button {
+
+    .add-blog-button {
         position: fixed;
         bottom: 30px;
         right: 30px;
@@ -215,6 +216,76 @@
         border-radius: 4px;
         cursor: pointer;
     }
+
+    .full-screen-modal {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: var(--nvidia-dark);
+        color: white;
+    }
+
+    .full-screen-modal-content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        box-sizing: border-box;
+    }
+
+    .full-screen-close {
+        color: #aaa;
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .full-screen-close:hover,
+    .full-screen-close:focus {
+        color: var(--nvidia-green);
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    #fullScreenBlogImage {
+        width: 100%;
+        max-height: 50vh;
+        object-fit: cover;
+        margin-bottom: 2rem;
+    }
+
+    #fullScreenBlogTitle {
+        color: var(--nvidia-green);
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    #fullScreenBlogContent {
+        font-size: 1.2rem;
+        line-height: 1.6;
+        max-width: 800px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .full-screen-blog-meta {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 800px;
+        color: var(--nvidia-gray);
+    }
 </style>
 
 <main>
@@ -240,37 +311,27 @@
     </section>
     
     <section class="blog-posts">
-        <!-- <h2>Latest Blog Posts</h2> -->
         <div class="blog-grid">
             <div class="blog-card">
                 <img src="https://via.placeholder.com/400x200" alt="Blog 1">
                 <h3>The Future of Ray Tracing</h3>
                 <p>Explore how ray tracing is revolutionizing graphics...</p>
+                <div class="blog-meta">
+                    <span>By Author 1</span>
+                    <span>Category 1</span>
+                </div>
             </div>
             <div class="blog-card">
                 <img src="https://via.placeholder.com/400x200" alt="Blog 2">
                 <h3>AI and GPUs: A Perfect Match</h3>
                 <p>Discover how GPUs are powering the AI revolution...</p>
+                <div class="blog-meta">
+                    <span>By Author 2</span>
+                    <span>Category 2</span>
+                </div>
             </div>
         </div>
     </section>
-
-    <!-- <section class="all-blogs">
-        <h2>All Blogs</h2>
-        <div class="blog-grid">
-            {% for blog in blogs[3:] %}
-            <div class="blog-card">
-                <img src="https://via.placeholder.com/400x200" alt="{{ blog.title }}">
-                <h3>{{ blog.title }}</h3>
-                <p>{{ blog.content[:100] }}...</p>
-                <div class="blog-meta">
-                    <span>By {{ blog.author }}</span>
-                    <span>{{ blog.category }}</span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </section> -->
 
     <section class="gpu-insights">
         <h2>GPU Insights</h2>
@@ -293,53 +354,63 @@
             </div>
         </div>
     </section>
-    <!-- Modal for displaying full blog details -->
-    <div id="blogModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2 id="modalBlogTitle"></h2>
-            <p id="modalBlogContent"></p>
-            <div class="blog-meta">
-                <span id="modalBlogAuthor"></span>
-                <span id="modalBlogCategory"></span>
+
+    <!-- Full-screen blog modal -->
+    <div id="fullScreenBlogModal" class="full-screen-modal">
+        <div class="full-screen-modal-content">
+            <span class="full-screen-close">&times;</span>
+            <img id="fullScreenBlogImage" src="" alt="Blog Image">
+            <h2 id="fullScreenBlogTitle"></h2>
+            <p id="fullScreenBlogContent"></p>
+            <div class="full-screen-blog-meta">
+                <span id="fullScreenBlogAuthor"></span>
+                <span id="fullScreenBlogCategory"></span>
             </div>
         </div>
     </div>
 </main>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const blogCards = document.querySelectorAll('.blog-card');
+        const fullScreenModal = document.getElementById('fullScreenBlogModal');
+        const fullScreenCloseBtn = document.querySelector('.full-screen-close');
 
         blogCards.forEach(card => {
             card.addEventListener('click', function () {
                 const title = card.querySelector('h3').textContent;
                 const content = card.querySelector('p').textContent;
-                const author = card.querySelector('.blog-meta span:first-child').textContent.slice(3); // Remove 'By '
+                const author = card.querySelector('.blog-meta span:first-child').textContent;
                 const category = card.querySelector('.blog-meta span:last-child').textContent;
+                const imageSrc = card.querySelector('img').src;
 
-                // Populate modal with clicked blog details
-                document.getElementById('modalBlogTitle').textContent = title;
-                document.getElementById('modalBlogContent').textContent = content;
-                document.getElementById('modalBlogAuthor').textContent = `By ${author}`;
-                document.getElementById('modalBlogCategory').textContent = category;
+                // Populate full-screen modal with clicked blog details
+                document.getElementById('fullScreenBlogTitle').textContent = title;
+                document.getElementById('fullScreenBlogContent').textContent = content;
+                document.getElementById('fullScreenBlogAuthor').textContent = author;
+                document.getElementById('fullScreenBlogCategory').textContent = category;
+                document.getElementById('fullScreenBlogImage').src = imageSrc;
 
-                // Display the modal
-                const modal = document.getElementById('blogModal');
-                modal.style.display = 'block';
-
-                // Close the modal when clicking outside the modal content or close button
-                const closeBtn = document.querySelector('.close');
-                closeBtn.addEventListener('click', function () {
-                    modal.style.display = 'none';
-                });
-
-                window.addEventListener('click', function (event) {
-                    if (event.target === modal) {
-                        modal.style.display = 'none';
-                    }
-                });
+                // Display the full-screen modal
+                fullScreenModal.style.display = 'flex';
+                document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
             });
         });
+
+        // Close the full-screen modal when clicking the close button
+        fullScreenCloseBtn.addEventListener('click', closeFullScreenModal);
+
+        // Close the full-screen modal when pressing the Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeFullScreenModal();
+            }
+        });
+
+        function closeFullScreenModal() {
+            fullScreenModal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Re-enable scrolling
+        }
     });
 </script>
 {% endblock %}

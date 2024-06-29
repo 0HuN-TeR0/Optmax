@@ -292,7 +292,21 @@ def add_gpu():
 @app.route('/blogs')
 def blogs():
     blogs = Blog.query.all()
-    return render_template('blogs.html', blogs=blogs)
+    
+    # Convert blog objects to dictionaries with all necessary fields
+    blog_list = []
+    for blog in blogs:
+        blog_dict = {
+            'id': blog.id,
+            'title': blog.title,
+            'content': blog.content,
+            'author': blog.author,
+            'category': blog.category,
+            'image_url': blog.image_url  # Assuming you have an image_url field
+        }
+        blog_list.append(blog_dict)
+    
+    return render_template('blogs.html', blogs=blog_list)
 
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
