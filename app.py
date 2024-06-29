@@ -152,7 +152,7 @@ def recommend_gpu(user_input, user=None):
         recommendations = data.iloc[distances[:5]]
 
     # Assuming 'id' is the correct column name for GPU IDs
-    recommendations['details_link'] = recommendations['id'].apply(lambda x: f'<a href="/gpu/{x}">Details</a>')
+    recommendations['details_link'] = recommendations['id'].apply(lambda x: f'<a href="/gpus/{x}">Details</a>')
 
     return recommendations
 
@@ -290,7 +290,38 @@ def gpu_details(id):
         'testdate': gpu.testdate,
         'category': gpu.category
     }
-    return  render_template('gpu_details.html', gpu=gpu_data)
+    return jsonify(gpu_data)
+@app.route('/gpus/<int:id>', methods=['GET'])
+def gpus_details(id):
+    gpu = GPU.query.get_or_404(id)
+    gpu_data = {
+        'id': gpu.id,
+        'manufacturer': gpu.manufacturer,
+        'productname': gpu.productname,
+        'price': gpu.price,
+        'picture': gpu.picture,
+        'memsize': gpu.memsize,
+        'gpuclock': gpu.gpuclock,
+        'memclock': gpu.memclock,
+        'unifiedshader': gpu.unifiedshader,
+        'releaseyear': gpu.releaseyear,
+        'memtype': gpu.memtype,
+        'membuswidth': gpu.membuswidth,
+        'rop': gpu.rop,
+        'pixelshader': gpu.pixelshader,
+        'vertexshader': gpu.vertexshader,
+        'igp': gpu.igp,
+        'bus': gpu.bus,
+        'gpuchip': gpu.gpuchip,
+        'g3dmark': gpu.g3dmark,
+        'g2dmark': gpu.g2dmark,
+        'gpuvalue': gpu.gpuvalue,
+        'tdp': gpu.tdp,
+        'powerperformance': gpu.powerperformance,
+        'testdate': gpu.testdate,
+        'category': gpu.category
+    }
+    return render_template('gpu_details.html', gpu=gpu_data)
 
 @app.route('/add_gpu', methods=['POST'])
 def add_gpu():
