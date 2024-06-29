@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Recommendation System</title>
+<style>
+    :root {
+        --nvidia-green: #76b900;
+        --nvidia-dark: #1a1a1a;
+        --nvidia-gray: #666666;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+        color: var(--nvidia-dark);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+
+    header {
+        background-color: var(--nvidia-dark);
+        padding: 1rem 2rem;
+    }
+
+    nav ul {
+        list-style-type: none;
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin: 0;
+        padding: 0;
+    }
+
+    nav a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s, color 0.3s;
+        font-weight: 500;
+    }
+
+    nav a:hover, nav a.active {
+        background-color: var(--nvidia-green);
+        color: var(--nvidia-dark);
+    }
+
+    main {
+        flex-grow: 1;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    footer {
+        background-color: var(--nvidia-dark);
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: auto;
+    }
+
+    @media (max-width: 768px) {
+        nav ul {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        nav li {
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    /* Existing styles */
+    h1, h2 {
+        color: var(--nvidia-green);
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        width: 100%;
+    }
+
+    form {
+        background-color: var(--nvidia-dark);
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 800px;
+        text-align: left;
+        color: white;
+    }
+
+    label, select, button, input {
+        display: block;
+        margin: 10px 0;
+        width: 100%;
+    }
+
+    label {
+        color: var(--nvidia-green);
+    }
+
+    select, input {
+        background-color: #2E2E2E;
+        color: white;
+        border: 1px solid var(--nvidia-green);
+        border-radius: 5px;
+        padding: 5px;
+    }
+
+    button {
+        background-color: var(--nvidia-green);
+        color: var(--nvidia-dark);
+        border: none;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #5a8f00;
+    }
+
+    .recommendations {
+        margin-top: 20px;
+        background-color: var(--nvidia-dark);
+        padding: 20px;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 1200px;
+        color: white;
+    }
+
+    .recommendations h2 {
+        color: var(--nvidia-green);
+    }
+
+    .recommendations table {
+        width: 100%;
+        color: white;
+    }
+
+    .recommendations table, .recommendations th, .recommendations td {
+        border: 1px solid var(--nvidia-green);
+        border-collapse: collapse;
+    }
+
+    .recommendations th, .recommendations td {
+        padding: 10px;
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>GPU Recommendation System</h1>
+    <form method="POST">
+        <h2>For Non-technical Users:</h2>
+        <label for="profile">Choose a profile:</label>
+        <select name="profile" id="profile">
+            <option value="Custom">Custom</option>
+            {% for profile in predefined_profiles %}
+            <option value="{{ profile }}">{{ profile }}</option>
+            {% endfor %}
+        </select>
+
+        <h2>Or Customize Your Preferences:</h2>
+
+        <label for="price">Price Range ($):</label>
+        <select id="price" name="price" onchange="toggleCustom('price')" required>
+            {% for range in price_ranges %}
+            <option value="{{ range }}">{{ range }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_price" name="custom_price" style="display: none;" placeholder="Enter custom price">
+
+        <label for="mem_size">Memory Size (GB):</label>
+        <select id="mem_size" name="mem_size" onchange="toggleCustom('mem_size')" required>
+            {% for size in mem_size_range %}
+            <option value="{{ size }}">{{ size }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_mem_size" name="custom_mem_size" style="display: none;" placeholder="Enter custom memory size">
+
+        <label for="gpu_clock">GPU Clock (MHz):</label>
+        <select id="gpu_clock" name="gpu_clock" onchange="toggleCustom('gpu_clock')" required>
+            {% for range in gpu_clock_range %}
+            <option value="{{ range }}">{{ range }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_gpu_clock" name="custom_gpu_clock" style="display: none;" placeholder="Enter custom GPU clock">
+
+        <label for="mem_clock">Memory Clock (MHz):</label>
+        <select id="mem_clock" name="mem_clock" onchange="toggleCustom('mem_clock')" required>
+            {% for range in mem_clock_range %}
+            <option value="{{ range }}">{{ range }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_mem_clock" name="custom_mem_clock" style="display: none;" placeholder="Enter custom memory clock">
+
+        <label for="unified_shader">Unified Shader:</label>
+        <select id="unified_shader" name="unified_shader" onchange="toggleCustom('unified_shader')" required>
+            {% for range in unified_shader_range %}
+            <option value="{{ range }}">{{ range }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_unified_shader" name="custom_unified_shader" style="display: none;" placeholder="Enter custom unified shader">
+
+        <label for="release_year">Release Year:</label>
+        <select id="release_year" name="release_year" onchange="toggleCustom('release_year')" required>
+            {% for year in release_year_range %}
+            <option value="{{ year }}">{{ year }}</option>
+            {% endfor %}
+        </select>
+        <input type="number" id="custom_release_year" name="custom_release_year" style="display: none;" placeholder="Enter custom release year">
+
+        <label for="mem_type">Memory Type:</label>
+        <select id="mem_type" name="mem_type" onchange="toggleCustom('mem_type')" required>
+            {% for type in mem_type_range %}
+            <option value="{{ type }}">{{ type }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" id="custom_mem_type" name="custom_mem_type" style="display: none;" placeholder="Enter custom memory type">
+
+
+        <button type="submit">Get Recommendations</button>
+    </form>
+
+    {% if recommendations %}
+    <div class="recommendations">
+        <h2>Recommended GPUs:</h2>
+        {{ recommendations|safe }}
+    </div>
+    {% endif %}
+</div>
+<script>
+function toggleCustom(field) {
+    var select = document.getElementById(field);
+    var custom = document.getElementById('custom_' + field);
+    if (select.value === 'Custom') {
+        custom.style.display = 'block';
+        custom.required = true;
+    } else {
+        custom.style.display = 'none';
+        custom.required = false;
+    }
+}
+</script>
+</body>
+</html>
+{% endblock %}

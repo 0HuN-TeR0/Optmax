@@ -1,0 +1,287 @@
+<!-- templates/index.html -->
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    :root {
+        --nvidia-green: #76b900;
+        --nvidia-dark: #1a1a1a;
+        --nvidia-gray: #666666;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+        color: var(--nvidia-dark);
+    }
+
+    header {
+        background-color: var(--nvidia-dark);
+        padding: 1rem 2rem;
+    }
+
+    nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .logo {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--nvidia-green);
+    }
+
+    nav ul {
+        list-style-type: none;
+        display: flex;
+        gap: 1rem;
+        margin: 0;
+        padding: 0;
+    }
+
+    nav a {
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        transition: background-color 0.3s;
+    }
+
+    nav a:hover, nav a.active {
+        background-color: var(--nvidia-green);
+    }
+
+    .login-btn {
+        background-color: var(--nvidia-green);
+    }
+
+    main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .hero {
+        text-align: center;
+        padding: 4rem 0;
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://via.placeholder.com/1200x400');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    h2 {
+        color: var(--nvidia-green);
+        border-bottom: 2px solid var(--nvidia-green);
+        padding-bottom: 0.5rem;
+    }
+
+    .gpu-grid, .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .gpu-card, .blog-card {
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .gpu-card:hover, .blog-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    .gpu-card img, .blog-card img {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+
+    .gpu-card h3, .blog-card h3 {
+        padding: 1rem;
+        margin: 0;
+        color: var(--nvidia-dark);
+    }
+
+    .gpu-card p, .blog-card p {
+        padding: 0 1rem 1rem;
+        color: var(--nvidia-gray);
+    }
+    .latest-gpus {
+        padding: 20px;
+        text-align: center;
+    }
+    
+    .gpu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+    }
+    
+    .gpu-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+        width: 300px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .gpu-card:hover {
+        transform: scale(1.05);
+    }
+    
+    .gpu-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .gpu-card h3 {
+        margin: 10px 0;
+        font-size: 1.2em;
+    }
+    
+    .gpu-card p {
+        margin: 5px 0;
+    }
+    
+    #load-more {
+        margin-top: 20px;
+        padding: 10px 20px;
+        font-size: 1em;
+        cursor: pointer;
+    }
+    
+    footer {
+        background-color: var(--nvidia-dark);
+        color: white;
+        text-align: center;
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+</style>
+
+<header>
+    <nav>
+        <div class="logo">TechGPU</div>
+        <ul>
+            <li><a href="#" class="active">Home</a></li>
+            <li><a href="#">GPUs</a></li>
+            <li><a href="#">Blogs</a></li>
+            <li><a href="#">For You</a></li>
+            <li><a href="#" class="login-btn">Login</a></li>
+        </ul>
+    </nav>
+</header>
+
+<main>
+    <section class="hero">
+        <h1>Unleash Your Graphics Potential</h1>
+        <p>Discover the latest in GPU technology</p>
+    </section>
+
+    .latest-gpus {
+    padding: 20px;
+    text-align: center;
+}
+
+.gpu-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.gpu-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 300px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.gpu-card:hover {
+    transform: scale(1.05);
+}
+
+.gpu-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.gpu-card h3 {
+    margin: 10px 0;
+    font-size: 1.2em;
+}
+
+.gpu-card p {
+    margin: 5px 0;
+}
+
+#load-more {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+    <section class="latest-gpus">
+        <h2>Latest GPUs</h2>
+        <div class="gpu-grid">
+            <div class="gpu-card">
+                <img src="https://via.placeholder.com/300x200" alt="GPU 1">
+                <h3>TechGPU RTX 4090</h3>
+                <p>The ultimate gaming experience</p>
+            </div>
+            <div class="gpu-card">
+                <img src="https://via.placeholder.com/300x200" alt="GPU 2">
+                <h3>TechGPU RTX 4080</h3>
+                <p>Unparalleled performance</p>
+            </div>
+            <div class="gpu-card">
+                <img src="https://via.placeholder.com/300x200" alt="GPU 3">
+                <h3>TechGPU RTX 4070</h3>
+                <p>Balanced power and efficiency</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="blog-posts">
+        <h2>Latest Blog Posts</h2>
+        <div class="blog-grid">
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="Blog 1">
+                <h3>The Future of Ray Tracing</h3>
+                <p>Explore how ray tracing is revolutionizing graphics...</p>
+            </div>
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="Blog 2">
+                <h3>AI and GPUs: A Perfect Match</h3>
+                <p>Discover how GPUs are powering the AI revolution...</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <p>&copy; 2024 TechGPU. All rights reserved.</p>
+</footer>
+{% endblock %}
