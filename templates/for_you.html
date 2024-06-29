@@ -163,6 +163,21 @@
         padding: 10px;
         text-align: center;
     }
+    .nvidia-button {
+    background-color: var(--nvidia-green);
+    color: var(--nvidia-dark);
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s;
+}
+
+.nvidia-button:hover {
+    background-color: #5a8f00;
+}
 </style>
 </head>
 <body>
@@ -239,11 +254,11 @@
 
         <button type="submit">Get Recommendations</button>
     </form>
-
     {% if recommendations %}
     <div class="recommendations">
         <h2>Recommended GPUs:</h2>
         {{ recommendations|safe }}
+        <button id="savePreferences" class="nvidia-button">Save Preferences</button>
     </div>
     {% endif %}
 </div>
@@ -259,6 +274,25 @@ function toggleCustom(field) {
         custom.required = false;
     }
 }
+document.getElementById('savePreferences').addEventListener('click', function() {
+    const formData = new FormData(document.querySelector('form'));
+    fetch('/save_preferences', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Preferences saved successfully!');
+        } else {
+            alert('Error saving preferences. Please try again.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+});
 </script>
 </body>
 </html>
