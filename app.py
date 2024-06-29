@@ -1,30 +1,40 @@
-from flask import request, jsonify
-from flask_login import current_user, login_required
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from extensions import db, migrate
-from models import User, GPU, Blog, Preference
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, FloatField, TextAreaField
-from wtforms.validators import InputRequired, Email, EqualTo, NumberRange
-from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 import os
+
 import pandas as pd
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+    jsonify,
+)
+from flask_login import current_user, login_required
+from flask_wtf import FlaskForm
+from wtforms import (
+    StringField,
+    PasswordField,
+    FloatField,
+    TextAreaField,
+    SubmitField,
+    SelectField,
+)
+from wtforms.validators import (
+    InputRequired,
+    Email,
+    EqualTo,
+    NumberRange,
+    DataRequired
+)
+from werkzeug.security import generate_password_hash, check_password_hash
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import NearestNeighbors
-from flask import Flask, render_template, redirect, url_for, flash, session
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_migrate import Migrate
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import InputRequired, Email, EqualTo
-from models import User, GPU, Blog
-import bcrypt
-from wtforms import StringField, PasswordField, SubmitField, SelectField
-from wtforms.validators import DataRequired, Email, EqualTo
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
+
+from models import User, GPU, Blog, Preference
+from extensions import db, migrate
 
 
 class Config:
@@ -40,12 +50,13 @@ app.config.from_object(Config)
 db.init_app(app)
 migrate.init_app(app, db)
 
+
 def load_gpu_data():
     with app.app_context():
         gpu_data = GPU.query.all()
         data = pd.DataFrame([
             {
-                'id':gpu.id,
+                'id': gpu.id,
                 'manufacturer': gpu.manufacturer,
                 'productName': gpu.productname,
                 'price': gpu.price,
@@ -60,6 +71,7 @@ def load_gpu_data():
         ])
     return data
 
+
 # Load and preprocess data
 data = load_gpu_data()
 # Adjust label encoding
@@ -67,12 +79,18 @@ label_encoder = LabelEncoder()
 data['memType'] = label_encoder.fit_transform(data['memType'])
 
 # Define ranges for each feature
-price_ranges = ['0-200', '201-400', '401-600', '601-800', '801-1000', '1000+', 'Custom']
-mem_size_range = ['Less than 1', '1', '2', '4', '6', '8', '12', '16', '24', 'Custom']
-gpu_clock_range = ['0-200', '201-400', '401-600', '601-800', '801-1000', '1001-1200', '1200+', 'Custom']
-mem_clock_range = ['0-1000', '1001-2000', '2001-3000', '3001-4000', '4001-5000', '5000+', 'Custom']
-unified_shader_range = ['0-500', '501-1000', '1001-1500', '1501-2000', '2001-2500', '2500+', 'Custom']
-release_year_range = sorted(set(int(year) for year in data['releaseYear'].unique())) + ['Custom']
+price_ranges = ['0-200', '201-400', '401-600',
+                '601-800', '801-1000', '1000+', 'Custom']
+mem_size_range = ['Less than 1', '1', '2',
+                  '4', '6', '8', '12', '16', '24', 'Custom']
+gpu_clock_range = ['0-200', '201-400', '401-600',
+                   '601-800', '801-1000', '1001-1200', '1200+', 'Custom']
+mem_clock_range = ['0-1000', '1001-2000', '2001-3000',
+                   '3001-4000', '4001-5000', '5000+', 'Custom']
+unified_shader_range = ['0-500', '501-1000', '1001-1500',
+                        '1501-2000', '2001-2500', '2500+', 'Custom']
+release_year_range = sorted(
+    set(int(year) for year in data['releaseYear'].unique())) + ['Custom']
 mem_type_range = list(label_encoder.classes_) + ['Custom']
 
 predefined_profiles = {
@@ -115,9 +133,12 @@ predefined_profiles = {
 }
 
 # KNN model
-X = data[['price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType']]
+X = data[['price', 'memSize', 'gpuClock', 'memClock',
+          'unifiedShader', 'releaseYear', 'memType']]
 knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
 knn.fit(X)
+
+
 def recommend_gpu(user_input, user=None):
     if user and user.is_authenticated:
         # Check if the user has a preference
@@ -130,7 +151,8 @@ def recommend_gpu(user_input, user=None):
             user_input['memClock'] = float(preference.mem_clock)
             user_input['unifiedShader'] = float(preference.unified_shader)
             user_input['releaseYear'] = float(preference.release_year)
-            user_input['memType'] = float(label_encoder.transform([preference.mem_type])[0])
+            user_input['memType'] = float(
+                label_encoder.transform([preference.mem_type])[0])
 
             # Combine the user's preference with the new input
             updated_input = {
@@ -157,9 +179,11 @@ def recommend_gpu(user_input, user=None):
         recommendations = data.iloc[distances[:5]]
 
     # Assuming 'id' is the correct column name for GPU IDs
-    recommendations['details_link'] = recommendations['id'].apply(lambda x: f'<a href="/gpus/{x}">Details</a>')
+    recommendations['details_link'] = recommendations['id'].apply(
+        lambda x: f'<a href="/gpus/{x}">Details</a>')
 
     return recommendations
+
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -303,6 +327,8 @@ def gpu_details(id):
         'category': gpu.category
     }
     return jsonify(gpu_data)
+
+
 @app.route('/gpus/<int:id>', methods=['GET'])
 def gpus_details(id):
     gpu = GPU.query.get_or_404(id)
@@ -475,8 +501,10 @@ def for_you():
         user_input.append(label_encoder.transform([mem_type])[0])
 
         # Ensure all inputs are valid numbers
-        user_input = [float(x) if isinstance(x, (int, float)) else 0 for x in user_input]
-        recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType','details_link']].to_html(escape=False)
+        user_input = [float(x) if isinstance(
+            x, (int, float)) else 0 for x in user_input]
+        recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
+                                                     'memClock', 'unifiedShader', 'releaseYear', 'memType', 'details_link']].to_html(escape=False)
     return render_template('for_you.html',
                            price_ranges=price_ranges,
                            mem_size_range=mem_size_range,
