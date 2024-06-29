@@ -1,0 +1,345 @@
+<!-- templates/blogs.html -->
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    :root {
+        --nvidia-green: #76b900;
+        --nvidia-dark: #1a1a1a;
+        --nvidia-gray: #666666;
+    }
+
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f0f0;
+        color: var(--nvidia-dark);
+    }
+
+    main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .hero {
+        text-align: center;
+        padding: 6rem 2rem;
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://via.placeholder.com/1200x400');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        border-radius: 10px;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .hero h1 {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .hero p {
+        font-size: 1.2rem;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    h2 {
+        color: var(--nvidia-green);
+        border-bottom: 2px solid var(--nvidia-green);
+        padding-bottom: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+    }
+
+    .blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .blog-card {
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .blog-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+
+    .blog-card img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+
+    .blog-card h3 {
+        padding: 1rem;
+        margin: 0;
+        color: var(--nvidia-dark);
+        font-size: 1.4rem;
+    }
+
+    .blog-card p {
+        padding: 0 1rem 1rem;
+        color: var(--nvidia-gray);
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .blog-meta {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 1rem 1rem;
+        color: var(--nvidia-gray);
+        font-size: 0.9rem;
+    }
+
+    .small-blog-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+
+    .small-blog-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .small-blog-card h3 {
+        font-size: 1.2rem;
+        color: var(--nvidia-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .small-blog-card p {
+        font-size: 0.9rem;
+        color: var(--nvidia-gray);
+    }
+
+    @media (max-width: 768px) {
+        .hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .hero p {
+            font-size: 1rem;
+        }
+
+        h2 {
+            font-size: 2rem;
+        }
+    }
+        .add-blog-button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--nvidia-green);
+        color: white;
+        font-size: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .add-blog-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 600px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: #000;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    form input, form textarea {
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+
+    form button {
+        background-color: var(--nvidia-green);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+</style>
+
+<main>
+    <section class="hero">
+        <h1>GPU Insights and News</h1>
+        <p>Stay informed with the latest in GPU technology and trends</p>
+    </section>
+    <section class="featured-blogs">
+        <h2>Featured Blogs</h2>
+        <div class="blog-grid">
+            {% for blog in blogs[:3] %}
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="{{ blog.title }}">
+                <h3>{{ blog.title }}</h3>
+                <p>{{ blog.content[:100] }}...</p>
+                <div class="blog-meta">
+                    <span>By {{ blog.author }}</span>
+                    <span>{{ blog.category }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    
+    <section class="blog-posts">
+        <!-- <h2>Latest Blog Posts</h2> -->
+        <div class="blog-grid">
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="Blog 1">
+                <h3>The Future of Ray Tracing</h3>
+                <p>Explore how ray tracing is revolutionizing graphics...</p>
+            </div>
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="Blog 2">
+                <h3>AI and GPUs: A Perfect Match</h3>
+                <p>Discover how GPUs are powering the AI revolution...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- <section class="all-blogs">
+        <h2>All Blogs</h2>
+        <div class="blog-grid">
+            {% for blog in blogs[3:] %}
+            <div class="blog-card">
+                <img src="https://via.placeholder.com/400x200" alt="{{ blog.title }}">
+                <h3>{{ blog.title }}</h3>
+                <p>{{ blog.content[:100] }}...</p>
+                <div class="blog-meta">
+                    <span>By {{ blog.author }}</span>
+                    <span>{{ blog.category }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section> -->
+
+    <section class="gpu-insights">
+        <h2>GPU Insights</h2>
+        <div class="small-blog-grid">
+            <div class="small-blog-card">
+                <h3>GPU Clock Speed</h3>
+                <p>GPU clock speed refers to how many cycles a GPU can execute per second. Higher clock speeds generally mean better performance, but it's not the only factor in GPU power.</p>
+            </div>
+            <div class="small-blog-card">
+                <h3>GPU Memory Type</h3>
+                <p>Modern GPUs use GDDR6 or HBM2 memory. GDDR6 offers high bandwidth at a lower cost, while HBM2 provides even higher bandwidth but is more expensive to implement.</p>
+            </div>
+            <div class="small-blog-card">
+                <h3>GPU Unified Shaders</h3>
+                <p>Unified shaders are programmable units in GPUs that can handle various types of shading tasks. They provide flexibility and efficiency in graphics processing.</p>
+            </div>
+            <div class="small-blog-card">
+                <h3>Memory Clock</h3>
+                <p>Memory clock speed affects how quickly data can be read from or written to the GPU's memory. Higher memory clock speeds can improve overall GPU performance, especially in memory-intensive tasks.</p>
+            </div>
+        </div>
+    </section>
+    <!-- Modal for displaying full blog details -->
+    <div id="blogModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 id="modalBlogTitle"></h2>
+            <p id="modalBlogContent"></p>
+            <div class="blog-meta">
+                <span id="modalBlogAuthor"></span>
+                <span id="modalBlogCategory"></span>
+            </div>
+        </div>
+    </div>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const blogCards = document.querySelectorAll('.blog-card');
+
+        blogCards.forEach(card => {
+            card.addEventListener('click', function () {
+                const title = card.querySelector('h3').textContent;
+                const content = card.querySelector('p').textContent;
+                const author = card.querySelector('.blog-meta span:first-child').textContent.slice(3); // Remove 'By '
+                const category = card.querySelector('.blog-meta span:last-child').textContent;
+
+                // Populate modal with clicked blog details
+                document.getElementById('modalBlogTitle').textContent = title;
+                document.getElementById('modalBlogContent').textContent = content;
+                document.getElementById('modalBlogAuthor').textContent = `By ${author}`;
+                document.getElementById('modalBlogCategory').textContent = category;
+
+                // Display the modal
+                const modal = document.getElementById('blogModal');
+                modal.style.display = 'block';
+
+                // Close the modal when clicking outside the modal content or close button
+                const closeBtn = document.querySelector('.close');
+                closeBtn.addEventListener('click', function () {
+                    modal.style.display = 'none';
+                });
+
+                window.addEventListener('click', function (event) {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

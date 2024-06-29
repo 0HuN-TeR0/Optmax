@@ -1,0 +1,133 @@
+<!-- templates/register.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .register-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem;
+    }
+    .register-card {
+        background-color: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+        max-width: 400px;
+        width: 100%;
+    }
+    .register-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    }
+    .register-header {
+        background-color: var(--nvidia-dark);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    .register-header h1 {
+        margin: 0;
+        font-size: 2rem;
+    }
+    .register-body {
+        padding: 2rem;
+    }
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: var(--nvidia-dark);
+        font-weight: bold;
+    }
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    .btn-nvidia {
+        background-color: var(--nvidia-green);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+        width: 100%;
+        font-size: 1rem;
+    }
+    .btn-nvidia:hover {
+        background-color: #5a8f00;
+    }
+    .login-link {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+    .login-link p {
+        margin-bottom: 0.5rem;
+        color: var(--nvidia-gray);
+    }
+    .btn-nvidia-secondary {
+        background-color: var(--nvidia-dark);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+        display: inline-block;
+        text-decoration: none;
+        font-size: 1rem;
+    }
+    .btn-nvidia-secondary:hover {
+        background-color: var(--nvidia-gray);
+    }
+</style>
+
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <h1>Register</h1>
+        </div>
+        <div class="register-body">
+            <form id="register-form" action="{{ url_for('register') }}" method="POST">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    {{ form.username(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    {{ form.email(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    {{ form.password(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password:</label>
+                    {{ form.confirm_password(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    {{ form.role(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-nvidia">Register</button>
+            </form>
+            <div class="login-link">
+                <p>Already have an account?</p>
+                <a href="{{ url_for('login') }}" class="btn-nvidia-secondary">Login</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

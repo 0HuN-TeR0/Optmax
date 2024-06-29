@@ -1,0 +1,17 @@
+<!-- templates/add_gpu.html -->
+{% extends 'base.html' %}
+{% block content %}
+    <h1>Add New GPU</h1>
+    <form id="gpu-form" action="{{ url_for('add_gpu') }}" method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <label for="name">Name:</label>
+        {{ form.name }}
+        <label for="specs">Specs:</label>
+        {{ form.specs }}
+        <label for="price">Price:</label>
+        {{ form.price }}
+        <label for="image">Image:</label>
+        <input type="file" name="image">
+        <button type="submit">Add GPU</button>
+    </form>
+{% endblock %}
