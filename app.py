@@ -40,6 +40,7 @@ def load_gpu_data():
         gpu_data = GPU.query.all()
         data = pd.DataFrame([
             {
+                'id':gpu.id,
                 'manufacturer': gpu.manufacturer,
                 'productName': gpu.productname,
                 'price': gpu.price,
@@ -144,11 +145,17 @@ def recommend_gpu(user_input, user=None):
     distances, indices = knn.kneighbors([updated_input])
 
     if len(indices[0]) > 0:
-        return data.iloc[indices[0]]
+        recommendations = data.iloc[indices[0]]
     else:
         # If no matches are found, fall back to the regular recommendation
         distances = ((X - updated_input) ** 2).sum(axis=1).argsort()
-        return data.iloc[distances[:5]]
+        recommendations = data.iloc[distances[:5]]
+
+    # Assuming 'id' is the correct column name for GPU IDs
+    recommendations['details_link'] = recommendations['id'].apply(lambda x: f'<a href="/gpus/{x}">Details</a>')
+
+    return recommendations
+
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -284,6 +291,37 @@ def gpu_details(id):
         'category': gpu.category
     }
     return jsonify(gpu_data)
+@app.route('/gpus/<int:id>', methods=['GET'])
+def gpus_details(id):
+    gpu = GPU.query.get_or_404(id)
+    gpu_data = {
+        'id': gpu.id,
+        'manufacturer': gpu.manufacturer,
+        'productname': gpu.productname,
+        'price': gpu.price,
+        'picture': gpu.picture,
+        'memsize': gpu.memsize,
+        'gpuclock': gpu.gpuclock,
+        'memclock': gpu.memclock,
+        'unifiedshader': gpu.unifiedshader,
+        'releaseyear': gpu.releaseyear,
+        'memtype': gpu.memtype,
+        'membuswidth': gpu.membuswidth,
+        'rop': gpu.rop,
+        'pixelshader': gpu.pixelshader,
+        'vertexshader': gpu.vertexshader,
+        'igp': gpu.igp,
+        'bus': gpu.bus,
+        'gpuchip': gpu.gpuchip,
+        'g3dmark': gpu.g3dmark,
+        'g2dmark': gpu.g2dmark,
+        'gpuvalue': gpu.gpuvalue,
+        'tdp': gpu.tdp,
+        'powerperformance': gpu.powerperformance,
+        'testdate': gpu.testdate,
+        'category': gpu.category
+    }
+    return render_template('gpu_details.html', gpu=gpu_data)
 
 @app.route('/add_gpu', methods=['POST'])
 def add_gpu():
@@ -424,7 +462,7 @@ def for_you():
 
         # Ensure all inputs are valid numbers
         user_input = [float(x) if isinstance(x, (int, float)) else 0 for x in user_input]
-        recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType']].to_html()
+        recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType','details_link']].to_html(escape=False)
 
     return render_template('for_you.html',
                            price_ranges=price_ranges,

@@ -8,179 +8,32 @@
         --nvidia-gray: #777;
     }
 
-    h2 {
-        color: var(--nvidia-green);
-        border-bottom: 2px solid var(--nvidia-green);
-        padding-bottom: 0.5rem;
-        margin-bottom: 2rem;
-        font-size: 2.5rem;
-    }
-
-    .gpu-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        margin-top: 2rem;
-    }
-
-    .gpu-card {
-        background-color: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        transition: transform 0.3s, box-shadow 0.3s;
-        cursor: pointer;
-    }
-
-    .gpu-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    }
-
-    .gpu-card img {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-    }
-
-    .gpu-card h3 {
-        padding: 1rem;
-        margin: 0;
-        color: var(--nvidia-dark);
-        font-size: 1.4rem;
-    }
-
-    .gpu-card p {
-        padding: 0 1rem 1rem;
-        color: var(--nvidia-gray);
-        font-size: 1rem;
-        line-height: 1.5;
-    }
-
-    #load-more, #add-gpu {
-        padding: 0.5rem 1rem;
-        font-size: 1rem;
-        background-color: var(--nvidia-green);
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    #load-more {
-        margin-top: 2rem;
-    }
-
-    #add-gpu {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 1rem;
-    }
-
-    .modal {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: white;
-        padding: 2rem;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-    }
-
-    .modal h2 {
-        color: var(--nvidia-green);
-    }
-
-    .close-button {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-    }
-
-    #gpu-form form {
+    .gpu-detail {
         display: flex;
         flex-direction: column;
-    }
-
-    #gpu-form form label, 
-    #gpu-form form input {
-        margin-bottom: 1rem;
-    }
-
-    #gpu-form form input[type="submit"] {
-        background-color: var(--nvidia-green);
-        color: white;
-        border: none;
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-    }
-
-    .fullscreen-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.9);
-        z-index: 1000;
-        overflow-y: auto;
-    }
-
-    .modal-content {
-        background-color: white;
-        margin: 5% auto;
+        align-items: center;
         padding: 2rem;
-        width: 80%;
-        max-width: 1200px;
+        background-color: white;
         border-radius: 10px;
-        position: relative;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
-    .modal-close {
-        position: absolute;
-        top: 10px;
-        right: 20px;
-        font-size: 2rem;
-        cursor: pointer;
-    }
-
-    .product-info {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2rem;
-    }
-
-    .product-image {
-        flex: 1;
-        min-width: 300px;
-    }
-
-    .product-image img {
+    .gpu-detail img {
         width: 100%;
+        max-width: 500px;
         height: auto;
         border-radius: 10px;
     }
 
-    .product-details {
-        flex: 2;
-        min-width: 300px;
-    }
-
-    .product-details h2 {
+    .gpu-detail h2 {
         color: var(--nvidia-green);
-        margin-bottom: 1rem;
+        margin: 1rem 0;
     }
 
-    .product-details p {
-        margin-bottom: 0.5rem;
+    .gpu-detail p {
+        color: var(--nvidia-gray);
+        font-size: 1rem;
+        margin: 0.5rem 0;
     }
 
     .back-button {
@@ -194,325 +47,32 @@
     }
 </style>
 
-<main>
-    <section class="latest-gpus">
-        <h2>Latest GPUs</h2>
-        <div class="gpu-grid" id="gpu-grid">
-            {% if gpus %}
-                {% for gpu in gpus %}
-                <div class="gpu-card" data-id="{{ gpu.id }}">
-                    <img src="{{ gpu.picture if gpu.picture else 'https://via.placeholder.com/300x200' }}" alt="{{ gpu.productname }}">
-                    <h3>{{ gpu.productname }}</h3>
-                    <p>Manufacturer: {{ gpu.manufacturer }}</p>
-                    <p>Price: ${{ gpu.price }}</p>
-                </div>
-                {% endfor %}
-            {% endif %}
-        </div>
-        {% if more_gpus %}
-            <button id="load-more">Load More</button>
-        {% endif %}
-    </section>
-</main>
-
-
-<button id="add-gpu">+ Add GPU</button>
-
-<div id="gpu-details-modal" class="modal">
-    <button class="close-button">&times;</button>
-    <h2>GPU Details</h2>
-    <div id="gpu-details-content"></div>
+<div class="gpu-detail">
+    <img src="{{  'https://via.placeholder.com/500x300' }}" alt="{{ gpu.productname }}">
+    <h2>{{ gpu.productname }}</h2>
+    <p><strong>Manufacturer:</strong> {{ gpu.manufacturer }}</p>
+    <p><strong>Price:</strong> ${{ gpu.price }}</p>
+    <p><strong>Memory Size:</strong> {{ gpu.memsize }} GB</p>
+    <p><strong>Memory Bus Width:</strong> {{ gpu.membuswidth }} bits</p>
+    <p><strong>GPU Clock:</strong> {{ gpu.gpuclock }} MHz</p>
+    <p><strong>Memory Clock:</strong> {{ gpu.memclock }} MHz</p>
+    <p><strong>Unified Shaders:</strong> {{ gpu.unifiedshader }}</p>
+    <p><strong>ROPs:</strong> {{ gpu.rop }}</p>
+    <p><strong>Pixel Shaders:</strong> {{ gpu.pixelshader }}</p>
+    <p><strong>Vertex Shaders:</strong> {{ gpu.vertexshader }}</p>
+    <p><strong>IGP:</strong> {{ gpu.igp }}</p>
+    <p><strong>Bus Interface:</strong> {{ gpu.bus }}</p>
+    <p><strong>Memory Type:</strong> {{ gpu.memtype }}</p>
+    <p><strong>GPU Chip:</strong> {{ gpu.gpuchip }}</p>
+    <p><strong>G3D Mark:</strong> {{ gpu.g3dmark }}</p>
+    <p><strong>G2D Mark:</strong> {{ gpu.g2dmark }}</p>
+    <p><strong>GPU Value:</strong> {{ gpu.gpuvalue }}</p>
+    <p><strong>TDP:</strong> {{ gpu.tdp }} W</p>
+    <p><strong>Power Performance:</strong> {{ gpu.powerperformance }}</p>
+    <p><strong>Test Date:</strong> {{ gpu.testdate }}</p>
+    <p><strong>Category:</strong> {{ gpu.category }}</p>
+    <a href="/gpus" class="back-button">Back to GPU List</a>
+    <p><strong>Or</strong> </p>
+    <a href="/for-you" class="back-button">Back to Recommendations</a>
 </div>
-<div id="gpu-form" class="modal">
-    <h2>Add GPU</h2>
-    <form id="gpu-form-data">
-        <div class="form-group">
-            <label for="manufacturer">Manufacturer:</label>
-            <input type="text" id="manufacturer" name="manufacturer" required>
-        </div>
-        <div class="form-group">
-            <label for="productName">Product Name:</label>
-            <input type="text" id="productName" name="productName" required>
-        </div>
-        <div class="form-group">
-            <label for="price">Price:</label>
-            <input type="number" id="price" name="price" required>
-        </div>
-        <div class="form-group">
-            <label for="memSize">Memory Size (GB):</label>
-            <input type="number" id="memSize" name="memSize" required>
-        </div>
-        <div class="form-group">
-            <label for="gpuClock">GPU Clock (MHz):</label>
-            <input type="number" id="gpuClock" name="gpuClock" required>
-        </div>
-        <div class="form-group">
-            <label for="memClock">Memory Clock (MHz):</label>
-            <input type="number" id="memClock" name="memClock" required>
-        </div>
-        <div class="form-group">
-            <label for="unifiedShader">Unified Shaders:</label>
-            <input type="number" id="unifiedShader" name="unifiedShader" required>
-        </div>
-        <div class="form-group">
-            <label for="releaseYear">Release Year:</label>
-            <input type="number" id="releaseYear" name="releaseYear" required>
-        </div>
-        <div class="form-group">
-            <label for="memType">Memory Type:</label>
-            <input type="text" id="memType" name="memType" required>
-        </div>
-        <div class="form-group">
-            <label for="memBusWidth">Memory Bus Width (bits):</label>
-            <input type="number" id="memBusWidth" name="memBusWidth" required>
-        </div>
-        <div class="form-group">
-            <label for="rop">ROPs:</label>
-            <input type="number" id="rop" name="rop" required>
-        </div>
-        <div class="form-group">
-            <label for="pixelShader">Pixel Shaders:</label>
-            <input type="text" id="pixelShader" name="pixelShader" required>
-        </div>
-        <div class="form-group">
-            <label for="vertexShader">Vertex Shaders:</label>
-            <input type="text" id="vertexShader" name="vertexShader" required>
-        </div>
-        <div class="form-group">
-            <label for="igp">IGP:</label>
-            <input type="text" id="igp" name="igp" required>
-        </div>
-        <div class="form-group">
-            <label for="bus">Bus Interface:</label>
-            <input type="text" id="bus" name="bus" required>
-        </div>
-        <div class="form-group">
-            <label for="gpuChip">GPU Chip:</label>
-            <input type="text" id="gpuChip" name="gpuChip" required>
-        </div>
-        <div class="form-group">
-            <label for="G3Dmark">G3D Mark:</label>
-            <input type="number" id="G3Dmark" name="G3Dmark" required>
-        </div>
-        <div class="form-group">
-            <label for="G2Dmark">G2D Mark:</label>
-            <input type="number" id="G2Dmark" name="G2Dmark" required>
-        </div>
-        <div class="form-group">
-            <label for="gpuValue">GPU Value:</label>
-            <input type="number" id="gpuValue" name="gpuValue" required>
-        </div>
-        <div class="form-group">
-            <label for="TDP">TDP (W):</label>
-            <input type="number" id="TDP" name="TDP" required>
-        </div>
-        <div class="form-group">
-            <label for="powerPerformance">Power Performance:</label>
-            <input type="number" id="powerPerformance" name="powerPerformance" required>
-        </div>
-        <div class="form-group">
-            <label for="testDate">Test Date:</label>
-            <input type="date" id="testDate" name="testDate" required>
-        </div>
-        <div class="form-group">
-            <label for="category">Category:</label>
-            <input type="text" id="category" name="category" required>
-        </div>
-        <div class="form-group">
-            <label for="picture">Picture URL:</label>
-            <input type="url" id="picture" name="picture" required>
-        </div>
-        <div class="form-group">
-            <input type="submit" value="Submit">
-        </div>
-    </form>
-</div>
-
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const loadMoreButton = document.getElementById("load-more");
-    const gpuGrid = document.getElementById("gpu-grid");
-    const addGpuButton = document.getElementById("add-gpu");
-    const gpuForm = document.getElementById("gpu-form");
-
-    let offset = 0;
-    const limit = 6;
-    let isShowingMore = true;
-
-    function showFullscreenModal(content) {
-        const modal = document.createElement('div');
-        modal.className = 'fullscreen-modal';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="modal-close">&times;</span>
-                ${content}
-            </div>
-        `;
-        document.body.appendChild(modal);
-        modal.style.display = 'block';
-
-        modal.querySelector('.modal-close').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-    }
-
-    function createGPUCard(gpu) {
-        const gpuCard = document.createElement("div");
-        gpuCard.classList.add("gpu-card");
-        gpuCard.dataset.id = gpu.id;
-
-        gpuCard.innerHTML = `
-            <img src="${gpu.picture ? `/static/uploads/${gpu.picture}` : "https://via.placeholder.com/300x200"}" alt="${gpu.productname}">
-            <h3>${gpu.productname}</h3>
-            <p>Manufacturer: ${gpu.manufacturer}</p>
-            <p>Price: $${gpu.price}</p>
-        `;
-
-        return gpuCard;
-    }
-    async function loadMoreGPUs() {
-    try {
-        const response = await fetch(`/gpus?offset=${offset}&limit=${limit}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        const data = await response.json();
-        
-        if (data.gpus.length > 0) {
-            data.gpus.forEach(gpu => {
-                const gpuCard = createGPUCard(gpu);
-                gpuGrid.appendChild(gpuCard);
-            });
-            offset += data.gpus.length;
-            loadMoreButton.style.display = data.more_gpus ? 'block' : 'none';
-        } else {
-            loadMoreButton.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error loading more GPUs:", error);
-    }
-}
-function showLessGPUs() {
-    const currentCards = gpuGrid.children.length;
-    const cardsToRemove = currentCards - limit;
-    
-    for (let i = 0; i < cardsToRemove; i++) {
-        gpuGrid.removeChild(gpuGrid.lastChild);
-    }
-
-    offset = Math.max(0, offset - cardsToRemove);
-    loadMoreButton.style.display = 'block';
-}
-    function toggleGPUs() {
-        if (isShowingMore) {
-            loadMoreGPUs();
-        } else {
-            showLessGPUs();
-        }
-        isShowingMore = !isShowingMore;
-        updateButtonText();
-    }
-
-    function updateButtonText() {
-        loadMoreButton.textContent = isShowingMore ? "Load More" : "Show Less";
-    }
-
-    function showGPUDetails(gpuId) {
-        fetch(`/gpu/${gpuId}`)
-            .then(response => response.json())
-            .then(gpu => {
-                const content = `
-                    <div class="product-info">
-                        <div class="product-image">
-                            <img src="${gpu.picture ? '/static/uploads/' + gpu.picture : 'https://via.placeholder.com/300x200'}" alt="${gpu.productname}">
-                        </div>
-                        <div class="product-details">
-                            <h2>${gpu.productname}</h2>
-                            <p><strong>Manufacturer:</strong> ${gpu.manufacturer}</p>
-                            <p><strong>Release Year:</strong> ${gpu.releaseyear}</p>
-                            <p><strong>Memory Size:</strong> ${gpu.memsize} GB</p>
-                            <p><strong>Memory Bus Width:</strong> ${gpu.membuswidth} bits</p>
-                            <p><strong>GPU Clock:</strong> ${gpu.gpuclock} MHz</p>
-                            <p><strong>Memory Clock:</strong> ${gpu.memclock} MHz</p>
-                            <p><strong>Unified Shaders:</strong> ${gpu.unifiedshader}</p>
-                            <p><strong>TMUs:</strong> ${gpu.tmu}</p>
-                            <p><strong>ROPs:</strong> ${gpu.rop}</p>
-                            <p><strong>Pixel Shaders:</strong> ${gpu.pixelshader}</p>
-                            <p><strong>Vertex Shaders:</strong> ${gpu.vertexshader}</p>
-                            <p><strong>IGP:</strong> ${gpu.igp}</p>
-                            <p><strong>Bus Interface:</strong> ${gpu.bus}</p>
-                            <p><strong>Memory Type:</strong> ${gpu.memtype}</p>
-                            <p><strong>GPU Chip:</strong> ${gpu.gpuchip}</p>
-                            <p><strong>G3D Mark:</strong> ${gpu.g3dmark}</p>
-                            <p><strong>G2D Mark:</strong> ${gpu.g2dmark}</p>
-                            <p><strong>Price:</strong> $${gpu.price}</p>
-                            <p><strong>GPU Value:</strong> ${gpu.gpuvalue}</p>
-                            <p><strong>TDP:</strong> ${gpu.tdp} W</p>
-                            <p><strong>Power Performance:</strong> ${gpu.powerperformance}</p>
-                            <p><strong>Test Date:</strong> ${gpu.testdate}</p>
-                            <p><strong>Category:</strong> ${gpu.category}</p>
-                        </div>
-                    </div>
-                    <a href="/gpus" class="back-button">Back to GPU List</a>
-                `;
-                showFullscreenModal(content);
-            })
-            .catch(error => console.error("Error loading GPU details:", error));
-    }
-
-    function showGPUForm() {
-        const content = gpuForm.innerHTML;
-        showFullscreenModal(content);
-        const form = document.querySelector('.fullscreen-modal form');
-        form.addEventListener('submit', submitGPUForm);
-    }
-
-    function submitGPUForm(event) {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-
-        fetch("/add_gpu", {
-            method: "POST",
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                event.target.reset();
-                document.querySelector('.fullscreen-modal').remove();
-                alert("GPU added successfully!");
-             
-                const newGPUCard = createGPUCard(data.gpu);
-                gpuGrid.insertBefore(newGPUCard, gpuGrid.firstChild);
-            } else {
-                alert("Error adding GPU: " + data.error);
-            }
-        })
-        .catch(error => {
-            console.error("Error submitting GPU form:", error);
-            alert("An error occurred while adding the GPU.");
-        });
-    }
-
-    loadMoreButton.addEventListener("click", toggleGPUs);
-    addGpuButton.addEventListener("click", showGPUForm);
-
-    gpuGrid.addEventListener("click", function(event) {
-        const gpuCard = event.target.closest(".gpu-card");
-        if (gpuCard) {
-            const gpuId = gpuCard.dataset.id;
-            showGPUDetails(gpuId);
-        }
-    });
-
-    // Load initial set of GPUs
-    loadMoreGPUs().then(() => {
-        isShowingMore = true;
-        updateButtonText();
-    });
-});
-
-    </script>
 {% endblock %}
