@@ -216,7 +216,6 @@
         border-radius: 4px;
         cursor: pointer;
     }
-
     .full-screen-modal {
         display: none;
         position: fixed;
@@ -228,16 +227,19 @@
         overflow: auto;
         background-color: var(--nvidia-dark);
         color: white;
+        justify-content: center;
+        align-items: center;
     }
 
     .full-screen-modal-content {
-        height: 100%;
+        max-width: 80%;
+        background-color: white;
+        color: var(--nvidia-dark);
+        padding: 20px;
+        border-radius: 10px;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         align-items: center;
-        padding: 40px;
-        box-sizing: border-box;
     }
 
     .full-screen-close {

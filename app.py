@@ -112,13 +112,43 @@ predefined_profiles = {
 X = data[['price', 'memSize', 'gpuClock', 'memClock', 'unifiedShader', 'releaseYear', 'memType']]
 knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
 knn.fit(X)
+def recommend_gpu(user_input, user=None):
+    if user and user.is_authenticated:
+        # Check if the user has a preference
+        preference = Preference.query.filter_by(user_id=user.id).first()
+        if preference:
+            # If the user has a preference, use it to update the user_input
+            user_input['price'] = float(preference.price_range)
+            user_input['memSize'] = float(preference.mem_size)
+            user_input['gpuClock'] = float(preference.gpu_clock)
+            user_input['memClock'] = float(preference.mem_clock)
+            user_input['unifiedShader'] = float(preference.unified_shader)
+            user_input['releaseYear'] = float(preference.release_year)
+            user_input['memType'] = float(label_encoder.transform([preference.mem_type])[0])
 
-def recommend_gpu(user_input):
-    distances, indices = knn.kneighbors([user_input])
-    if len(indices[0]) == 0:
-        distances = ((X - user_input) ** 2).sum(axis=1).argsort()
+            # Combine the user's preference with the new input
+            updated_input = {
+                'price': (user_input['price'] + preference.price_range) / 2,
+                'memSize': (user_input['memSize'] + preference.mem_size) / 2,
+                'gpuClock': (user_input['gpuClock'] + preference.gpu_clock) / 2,
+                'memClock': (user_input['memClock'] + preference.mem_clock) / 2,
+                'unifiedShader': (user_input['unifiedShader'] + preference.unified_shader) / 2,
+                'releaseYear': (user_input['releaseYear'] + preference.release_year) / 2,
+                'memType': (user_input['memType'] + float(label_encoder.transform([preference.mem_type])[0])) / 2
+            }
+    else:
+        # If no user is authenticated or the user has no preference, use the original user_input
+        updated_input = user_input
+
+    # Perform the recommendation based on the updated input
+    distances, indices = knn.kneighbors([updated_input])
+
+    if len(indices[0]) > 0:
+        return data.iloc[indices[0]]
+    else:
+        # If no matches are found, fall back to the regular recommendation
+        distances = ((X - updated_input) ** 2).sum(axis=1).argsort()
         return data.iloc[distances[:5]]
-    return data.iloc[indices[0]]
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])

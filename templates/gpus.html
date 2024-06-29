@@ -201,7 +201,8 @@
             {% if gpus %}
                 {% for gpu in gpus %}
                 <div class="gpu-card" data-id="{{ gpu.id }}">
-                    <img src="{{ gpu.picture if gpu.picture else 'https://via.placeholder.com/300x200' }}" alt="{{ gpu.productname }}">
+                    <!-- remove s in gpus for real image -->
+                    <img src="{{ gpu.picture if gpus.picture else 'https://via.placeholder.com/300x200' }}" alt="{{ gpu.productname }}">
                     <h3>{{ gpu.productname }}</h3>
                     <p>Manufacturer: {{ gpu.manufacturer }}</p>
                     <p>Price: ${{ gpu.price }}</p>
@@ -372,53 +373,54 @@ document.addEventListener("DOMContentLoaded", function() {
         return gpuCard;
     }
     async function loadMoreGPUs() {
-    try {
-        const response = await fetch(`/gpus?offset=${offset}&limit=${limit}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        });
-        const data = await response.json();
-        
-        if (data.gpus.length > 0) {
-            data.gpus.forEach(gpu => {
-                const gpuCard = createGPUCard(gpu);
-                gpuGrid.appendChild(gpuCard);
-            });
-            offset += data.gpus.length;
-            loadMoreButton.style.display = data.more_gpus ? 'block' : 'none';
-        } else {
-            loadMoreButton.style.display = 'none';
-        }
-    } catch (error) {
-        console.error("Error loading more GPUs:", error);
+  try {
+    const response = await fetch(`/gpus?offset=${offset}&limit=${limit}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    });
+    const data = await response.json();
+
+    if (data.gpus.length > 0) {
+      data.gpus.forEach(gpu => {
+        const gpuCard = createGPUCard(gpu);
+        gpuGrid.appendChild(gpuCard);
+      });
+      offset += data.gpus.length;
+      loadMoreButton.style.display = data.more_gpus ? 'block' : 'none';
+    } else {
+      loadMoreButton.style.display = 'none';
     }
+  } catch (error) {
+    console.error("Error loading more GPUs:", error);
+  }
 }
+
 function showLessGPUs() {
-    const currentCards = gpuGrid.children.length;
-    const cardsToRemove = currentCards - limit;
-    
-    for (let i = 0; i < cardsToRemove; i++) {
-        gpuGrid.removeChild(gpuGrid.lastChild);
-    }
+  const currentCards = gpuGrid.children.length;
+  const cardsToRemove = currentCards - limit;
 
-    offset = Math.max(0, offset - cardsToRemove);
-    loadMoreButton.style.display = 'block';
+  for (let i = 0; i < cardsToRemove; i++) {
+    gpuGrid.removeChild(gpuGrid.lastChild);
+  }
+
+  offset = Math.max(0, offset - cardsToRemove);
+  loadMoreButton.style.display = 'block';
 }
-    function toggleGPUs() {
-        if (isShowingMore) {
-            loadMoreGPUs();
-        } else {
-            showLessGPUs();
-        }
-        isShowingMore = !isShowingMore;
-        updateButtonText();
-    }
 
-    function updateButtonText() {
-        loadMoreButton.textContent = isShowingMore ? "Load More" : "Show Less";
-    }
+function toggleGPUs() {
+  if (isShowingMore) {
+    loadMoreGPUs();
+  } else {
+    showLessGPUs();
+  }
+  isShowingMore = !isShowingMore;
+  updateButtonText();
+}
 
+function updateButtonText() {
+  loadMoreButton.textContent = isShowingMore ? "Load More" : "Show Less";
+}
     function showGPUDetails(gpuId) {
         fetch(`/gpu/${gpuId}`)
             .then(response => response.json())
