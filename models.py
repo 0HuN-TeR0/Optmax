@@ -8,7 +8,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
     email = db.Column(db.String(150), nullable=False, unique=True)
-    password = db.Column(db.String(150), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     preferences = db.relationship('Preference', backref='users', lazy=True)
 
@@ -61,5 +61,6 @@ class Blog(db.Model):
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text, nullable=False)
     author = db.Column(db.String(150), nullable=False)
-    date = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+    date = db.Column(db.DateTime, nullable=False,
+                     default=db.func.current_timestamp())
     category = db.Column(db.String(100), nullable=False)
