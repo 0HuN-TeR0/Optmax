@@ -1,7 +1,9 @@
+from flask_login import UserMixin
+
 from extensions import db
 
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), nullable=False, unique=True)
@@ -9,6 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(150), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     preferences = db.relationship('Preference', backref='users', lazy=True)
+
 
 class Preference(db.Model):
     __tablename__ = 'preferences'
@@ -22,9 +25,6 @@ class Preference(db.Model):
     release_year = db.Column(db.Integer)
     mem_type = db.Column(db.String(50))
 
-
-
-from extensions import db
 
 class GPU(db.Model):
     __tablename__ = 'gpu_data'
