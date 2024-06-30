@@ -3,187 +3,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GPU Recommendation System</title>
-<style>
-    :root {
-        --nvidia-green: #76b900;
-        --nvidia-dark: #1a1a1a;
-        --nvidia-gray: #666666;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPU Recommendation System</title>
+    <style>
+        :root {
+            --nvidia-green: #76b900;
+            --nvidia-dark: #1a1a1a;
+            --nvidia-gray: #666666;
+        }
 
-    body {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f0f0f0;
-        color: var(--nvidia-dark);
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
-
-    header {
-        background-color: var(--nvidia-dark);
-        padding: 1rem 2rem;
-    }
-
-    nav ul {
-        list-style-type: none;
-        display: flex;
-        justify-content: center;
-        gap: 2rem;
-        margin: 0;
-        padding: 0;
-    }
-
-    nav a {
-        color: white;
-        text-decoration: none;
-        padding: 0.5rem 1rem;
-        border-radius: 4px;
-        transition: background-color 0.3s, color 0.3s;
-        font-weight: 500;
-    }
-
-    nav a:hover, nav a.active {
-        background-color: var(--nvidia-green);
-        color: var(--nvidia-dark);
-    }
-
-    main {
-        flex-grow: 1;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 2rem;
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    footer {
-        background-color: var(--nvidia-dark);
-        color: white;
-        text-align: center;
-        padding: 1rem;
-        margin-top: auto;
-    }
-
-    @media (max-width: 768px) {
-        nav ul {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+            color: var(--nvidia-dark);
+            display: flex;
             flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--nvidia-dark);
+            padding: 1rem 2rem;
+        }
+
+        nav ul {
+            list-style-type: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 0;
+            padding: 0;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            transition: background-color 0.3s, color 0.3s;
+            font-weight: 500;
+        }
+
+        nav a:hover, nav a.active {
+            background-color: var(--nvidia-green);
+            color: var(--nvidia-dark);
+        }
+
+        main {
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        footer {
+            background-color: var(--nvidia-dark);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            nav ul {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            nav li {
+                margin-bottom: 0.5rem;
+            }
+        }
+
+        h1, h2 {
+            color: var(--nvidia-green);
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
             align-items: center;
+            flex-direction: column;
+            width: 100%;
         }
 
-        nav li {
-            margin-bottom: 0.5rem;
+        form {
+            background-color: var(--nvidia-dark);
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 800px;
+            text-align: left;
+            color: white;
         }
-    }
 
-    /* Existing styles */
-    h1, h2 {
-        color: var(--nvidia-green);
-    }
+        label, select, button, input {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+        }
 
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        width: 100%;
-    }
+        label {
+            color: var(--nvidia-green);
+        }
 
-    form {
-        background-color: var(--nvidia-dark);
-        padding: 20px;
-        border-radius: 10px;
-        width: 80%;
-        max-width: 800px;
-        text-align: left;
-        color: white;
-    }
+        select, input {
+            background-color: #2E2E2E;
+            color: white;
+            border: 1px solid var(--nvidia-green);
+            border-radius: 5px;
+            padding: 5px;
+        }
 
-    label, select, button, input {
-        display: block;
-        margin: 10px 0;
-        width: 100%;
-    }
+        button {
+            background-color: var(--nvidia-green);
+            color: var(--nvidia-dark);
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
 
-    label {
-        color: var(--nvidia-green);
-    }
+        button:hover {
+            background-color: #5a8f00;
+        }
 
-    select, input {
-        background-color: #2E2E2E;
-        color: white;
-        border: 1px solid var(--nvidia-green);
-        border-radius: 5px;
-        padding: 5px;
-    }
+        .recommendations {
+            margin-top: 20px;
+            background-color: var(--nvidia-dark);
+            padding: 20px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 1200px;
+            color: white;
+        }
 
-    button {
-        background-color: var(--nvidia-green);
-        color: var(--nvidia-dark);
-        border: none;
-        border-radius: 5px;
-        padding: 10px;
-        font-size: 16px;
-        cursor: pointer;
-    }
+        .recommendations h2 {
+            color: var(--nvidia-green);
+        }
 
-    button:hover {
-        background-color: #5a8f00;
-    }
+        .recommendations table {
+            width: 100%;
+            color: white;
+        }
 
-    .recommendations {
-        margin-top: 20px;
-        background-color: var(--nvidia-dark);
-        padding: 20px;
-        border-radius: 10px;
-        width: 100%;
-        max-width: 1200px;
-        color: white;
-    }
+        .recommendations table, .recommendations th, .recommendations td {
+            border: 1px solid var(--nvidia-green);
+            border-collapse: collapse;
+        }
 
-    .recommendations h2 {
-        color: var(--nvidia-green);
-    }
+        .recommendations th, .recommendations td {
+            padding: 10px;
+            text-align: center;
+        }
 
-    .recommendations table {
-        width: 100%;
-        color: white;
-    }
+        /* Same styles for both buttons */
+        .nvidia-button {
+            background-color: var(--nvidia-green);
+            color: var(--nvidia-dark);
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s;
+        }
 
-    .recommendations table, .recommendations th, .recommendations td {
-        border: 1px solid var(--nvidia-green);
-        border-collapse: collapse;
-    }
-
-    .recommendations th, .recommendations td {
-        padding: 10px;
-        text-align: center;
-    }
-    .nvidia-button {
-    background-color: var(--nvidia-green);
-    color: var(--nvidia-dark);
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: background-color 0.3s;
-}
-
-.nvidia-button:hover {
-    background-color: #5a8f00;
-}
-</style>
+        .nvidia-button:hover {
+            background-color: #5a8f00;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
     <h1>GPU Recommendation System</h1>
     <form method="POST">
+        <input type="hidden" name="log_file_path" id="log_file_path" value="preferences_log.txt">
+
         <h2>For Non-technical Users:</h2>
         <label for="profile">Choose a profile:</label>
         <select name="profile" id="profile">
@@ -251,14 +256,13 @@
         </select>
         <input type="text" id="custom_mem_type" name="custom_mem_type" style="display: none;" placeholder="Enter custom memory type">
 
-
+        <button type="button" id="savePreferences" class="nvidia-button">Save Preferences</button>
         <button type="submit">Get Recommendations</button>
     </form>
     {% if recommendations %}
     <div class="recommendations">
         <h2>Recommended GPUs:</h2>
         {{ recommendations|safe }}
-        <button id="savePreferences" class="nvidia-button">Save Preferences</button>
     </div>
     {% endif %}
 </div>
@@ -266,21 +270,19 @@
 const profileSelect = document.getElementById('profile');
 const fields = ['price', 'mem_size', 'gpu_clock', 'mem_clock', 'unified_shader', 'release_year', 'mem_type'];
 const predefinedProfilesString = '{{ predefined_profiles|tojson|safe }}';
-const predefinedProfiles = JSON.parse(predefinedProfilesString)
+const predefinedProfiles = JSON.parse(predefinedProfilesString);
 profileSelect.addEventListener('change', function() {
     const selectedProfile = this.value;
     if (selectedProfile !== 'Custom') {
-        console.log(selectedProfile)
         const profile = predefinedProfiles[selectedProfile];
-        console.log(profile)
         fields.forEach(field => {
             document.getElementById(field).value = profile[field];
         });
     }
 });
 function toggleCustom(field) {
-    var select = document.getElementById(field);
-    var custom = document.getElementById('custom_' + field);
+    const select = document.getElementById(field);
+    const custom = document.getElementById('custom_' + field);
     if (select.value === 'Custom') {
         custom.style.display = 'block';
         custom.required = true;
@@ -289,24 +291,23 @@ function toggleCustom(field) {
         custom.required = false;
     }
 }
-document.getElementById('savePreferences').addEventListener('click', function() {
+document.getElementById('savePreferences').addEventListener('click', async function() {
     const formData = new FormData(document.querySelector('form'));
-    fetch('/save_preferences', {
+    const response = await fetch('/save_preferences', {
         method: 'POST',
         body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
+    });
+
+    if (response.ok) {
+        const data = await response.json();
         if (data.success) {
-            alert('Preferences saved successfully!');
+            alert(data.message);  // Display the success message
         } else {
             alert('Error saving preferences. Please try again.');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred. Please try again.');
-    });
+    } else {
+        alert('Error saving preferences. Please try again.');
+    }
 });
 </script>
 </body>
