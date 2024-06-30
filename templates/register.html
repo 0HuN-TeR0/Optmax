@@ -2,6 +2,14 @@
 {% extends 'base.html' %}
 
 {% block content %}
+{% for mesg in get_flashed_messages() %}
+    {% if mesg == "Registration successful. Please log in." %}
+        <h1>{{ mesg }}</h1>
+    {% endif %}
+    {% if mesg == "An error occurred. Please try again." %}
+        <h1>{{ mesg }}</h1>
+    {% endif %}
+{% endfor %}
 <style>
     .register-container {
         display: flex;

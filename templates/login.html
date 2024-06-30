@@ -1,6 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
+
+{% for mesg in get_flashed_messages() %}
+    {% if mesg == "Invalid email or password" %}
+        <h1>{{ mesg }}</h1>
+    {% endif %}
+{% endfor %}
 <style>
     .login-container {
         display: flex;

@@ -140,23 +140,55 @@
             font-size: 2rem;
         }
     }
-
-    .add-blog-button {
+    #add-blog {
         position: fixed;
-        bottom: 30px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
+        bottom: 20px;
+        right: 20px;
+        padding: 1rem;
+    }
+
+    #load-more, #add-blog {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
         background-color: var(--nvidia-green);
         color: white;
-        font-size: 2rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+        border: none;
+        border-radius: 5px;
         cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    #load-more {
+        margin-top: 2rem;
+    }
+
+    #blog-form form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    #blog-form form label, 
+    #blog-form form input {
+        margin-bottom: 1rem;
+    }
+
+    .add-blog-submit {
+        font-size: 16px;
+        background-color: var(--nvidia-green);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        bottom: 20px;
+        right: 20px;
+        padding: 1rem;
+    }
+
+    #blog-form form input[type="submit"] {
+        background-color: var(--nvidia-green);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
     }
 
     .add-blog-button:hover {
@@ -219,14 +251,14 @@
     .full-screen-modal {
         display: none;
         position: fixed;
-        z-index: 2000;
+        z-index: 1000;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
         overflow: auto;
         background-color: var(--nvidia-dark);
-        color: white;
+        /* color: white; */
         justify-content: center;
         align-items: center;
     }
@@ -250,6 +282,15 @@
         font-size: 40px;
         font-weight: bold;
         cursor: pointer;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: -5px;
+        right: 12px;
+        font-size: 2rem;
+        cursor: pointer;
+        color: red;
     }
 
     .full-screen-close:hover,
@@ -372,11 +413,69 @@
     </div>
 </main>
 
+{% if (user.role == 'admin' or user.role == 'editor') %}
+
+<button id="add-blog">+ Add Blog</button>
+
+<div id="blog" class="modal">
+    <button class="close-button">&times;</button>
+    <h2>Blog Details</h2>
+    <div id="blog-details-content"></div>
+</div>
+<div id="blog-form" class="modal">
+    <h2>Add blog</h2>
+    <form style="font-weight: bold;" id="blog-form-data">
+        <div class="form-group">
+            <label for="title"> Title: </label>
+            <br>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="category"> Category: </label>
+            <br>
+            <input type="text" id="category" name="category" required>
+        </div>
+        <div class="form-group">
+            <label for="content">Content:</label>
+            <br>
+            <textarea name="content" id="content" cols="30" rows="10">
+            </textarea>
+            <!-- <input type="text" id="content" name="content" required> -->
+        </div>
+        <div class="form-group">
+            <input class="add-blog-submit" type="submit" value="Submit">
+        </div>
+    </form>
+</div>
+
+{% endif %}
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const blogCards = document.querySelectorAll('.blog-card');
         const fullScreenModal = document.getElementById('fullScreenBlogModal');
         const fullScreenCloseBtn = document.querySelector('.full-screen-close');
+        const addBlogButton = document.getElementById("add-blog");
+        const blogForm = document.getElementById("blog-form");
+
+
+        function showFullscreenModal(content) {
+            const modal = document.createElement('div');
+            modal.className = 'full-screen-modal';
+            modal.id = "full-screen-modal"
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <span class="modal-close">&times;</span>
+                    ${content}
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+
+            modal.querySelector('.modal-close').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+        }
 
         blogCards.forEach(card => {
             card.addEventListener('click', function () {
@@ -399,8 +498,57 @@
             });
         });
 
+        function createBlogCard(blog) {
+            const blogCard = document.createElement("div");
+            blogCard.classList.add("blog-card");
+            // blogCard.dataset.id = gpu.id;
+
+            // <img src="${blog.picture ? `${gpu.picture}` : "https://via.placeholder.com/300x200"}" alt="${gpu.productname}">
+            blogCard.innerHTML = `
+                <h3>${blog.title}</h3>
+                <p>Content: ${blog.content}</p>
+                <p>Category: ${blog.price}</p>
+            `;
+
+            return blogCard;
+        }
+
+        function showBlogForm() {
+            const content = blogForm.innerHTML;
+            showFullscreenModal(content);
+            const form = document.querySelector('.full-screen-modal form');
+            form.addEventListener('submit', submitBlogForm);
+        }
+
+        function submitBlogForm(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+
+            fetch("/add_blog", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+
+                if (data.success) {
+                    event.target.reset();
+                    // const ele = document.getElementById('.full-screen-modal')
+                    // ele.remove()
+                    alert("Blog added successfully!");
+                } else {
+                    alert("Error adding GPU: " + data.error);
+                }
+            })
+            .catch(error => {
+                console.error("Error submitting Blog:", error);
+                alert("An error occurred while adding the Blog.");
+            });
+        }
+
         // Close the full-screen modal when clicking the close button
         fullScreenCloseBtn.addEventListener('click', closeFullScreenModal);
+        addBlogButton.addEventListener("click", showBlogForm);
 
         // Close the full-screen modal when pressing the Escape key
         document.addEventListener('keydown', function(event) {

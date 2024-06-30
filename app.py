@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, UTC
 
 import pandas as pd
 from flask import (
@@ -11,7 +12,13 @@ from flask import (
     session,
     jsonify,
 )
-from flask_login import current_user, login_required
+from flask_login import (
+    current_user,
+    login_user,
+    logout_user,
+    login_required,
+    LoginManager,
+)
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -49,6 +56,24 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate.init_app(app, db)
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+
+@login_manager.user_loader
+def user_loader(email):
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        return
+    return user
+
+@login_manager.request_loader
+def request_loader(request):
+    email = request.form.get('email')
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        return
+    return user
 
 
 def load_gpu_data():
@@ -206,6 +231,12 @@ class GPUForm(FlaskForm):
                        InputRequired(), NumberRange(min=0)])
     image = StringField('Image URL')  # Placeholder for file upload handling
 
+class BlogForm(FlaskForm):
+    title = StringField('Title', validators=[InputRequired()])
+    content = TextAreaField('Content', validators=[InputRequired()])
+    category = StringField('Category', validators=[InputRequired()])
+    # image = StringField('Image URL')  # Placeholder for file upload handling
+
 
 @app.route('/')
 def home():
@@ -358,20 +389,82 @@ def add_gpu():
 def blogs():
     blogs = Blog.query.all()
 
+    if 'user_id' not in session:
+        user_dict = {"role": "normal"}
+    else:
+        user = User.query.get(session['user_id'])
+        user_dict = {"role": user.role}
+
     # Convert blog objects to dictionaries with all necessary fields
     blog_list = []
     for blog in blogs:
         blog_dict = {
-            'id': blog.id,
             'title': blog.title,
             'content': blog.content,
             'author': blog.author,
+            'date': blog.date,
             'category': blog.category,
-            'image_url': blog.image_url  # Assuming you have an image_url field
+            # 'image_url': blog.image_url  # Assuming you have an image_url field
         }
         blog_list.append(blog_dict)
 
-    return render_template('blogs.html', blogs=blog_list)
+    return render_template(
+        'blogs.html',
+        blogs=blog_list[::-1],
+        user = user_dict,
+        )
+
+
+@app.route('/add_blog', methods=["GET", "POST"])
+# @login_required
+def add_blog():
+    if request.method == "GET":
+        return redirect(url_for(''))
+
+    if 'user_id' not in session:
+        flash('Please login to access page', 'warning')
+        return redirect(url_for('login'))
+
+    user = User.query.get(session['user_id'])
+
+    if user.role not in {"admin", "editor"}:
+        return redirect(url_for('blogs'))
+
+    form = BlogForm()
+    # print("*" * 100)
+    # print(form.category.data)
+    # print(dir(form))
+    # print(form.validate_on_submit())
+    # if not form.validate_on_submit():
+    #     return render_template('blogs.html')
+    
+    # print("_" * 100)
+    new_blog = Blog(
+        title=form.title.data,
+        content=form.content.data,
+        author=user.email,
+        date=datetime.now(UTC),
+        category=form.category.data,
+    )
+    try:
+        db.session.add(new_blog)
+        db.session.commit()
+        db.session.refresh(new_blog)
+        flash('Blog added successful.', 'success')
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        flash('An error occurred. Please try again.', 'danger')
+        app.logger.error(f"Error during posting blog: {str(e)}")
+        return redirect(url_for('blogs'))
+    new_blog_dict = new_blog.as_dict()
+    res = {
+            "success": True,
+            "blog": new_blog_dict,
+    }
+    return jsonify(res)
+    # Convert blog objects to dictionaries with all necessary fields
+    
+
 
 
 @app.route('/for-you', methods=['GET', 'POST'])
@@ -476,8 +569,11 @@ def for_you():
 
 
 @app.route('/save_preferences', methods=['POST'])
-@login_required
+# @login_required
 def save_preferences():
+    if 'user_id' not in session:
+        flash('Please login to access page', 'warning')
+        return redirect(url_for('login'))
     try:
         price_range = request.form.get('price')
         mem_size = request.form.get('mem_size')
@@ -529,6 +625,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and check_password_hash(user.password, form.password.data):
             session['user_id'] = user.id
+            # login_user(user=user)
             flash('Login successful', 'success')
             return redirect(url_for('profile'))
         flash('Invalid email or password', 'danger')
@@ -551,6 +648,7 @@ def register():
         try:
             db.session.add(new_user)
             db.session.commit()
+            db.session.refresh(new_user)
             flash('Registration successful. Please log in.', 'success')
             return redirect(url_for('login'))
         except SQLAlchemyError as e:
@@ -560,10 +658,12 @@ def register():
 
     return render_template('register.html', form=form)
 
+@app.route("/logout")
 def logout():
     session.pop('user_id', None)
+    # logout_user()
     flash('You have been logged out', 'info')
-    return redirect(url_for('home'))
+    return redirect(url_for('login'))
 
 
 @app.route('/profile')

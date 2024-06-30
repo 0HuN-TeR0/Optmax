@@ -57,10 +57,15 @@ class GPU(db.Model):
 
 
 class Blog(db.Model):
+    __tablename__ = 'blog'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
     content = db.Column(db.Text, nullable=False)
     author = db.Column(db.String(150), nullable=False)
     date = db.Column(db.DateTime, nullable=False,
-                     default=db.func.current_timestamp())
+                        default=db.func.current_timestamp())
     category = db.Column(db.String(100), nullable=False)
+    def as_dict(self):
+        res = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        res["date"] = str(res["date"])
+        return res
