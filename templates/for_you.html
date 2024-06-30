@@ -263,6 +263,21 @@
     {% endif %}
 </div>
 <script>
+const profileSelect = document.getElementById('profile');
+const fields = ['price', 'mem_size', 'gpu_clock', 'mem_clock', 'unified_shader', 'release_year', 'mem_type'];
+const predefinedProfilesString = '{{ predefined_profiles|tojson|safe }}';
+const predefinedProfiles = JSON.parse(predefinedProfilesString)
+profileSelect.addEventListener('change', function() {
+    const selectedProfile = this.value;
+    if (selectedProfile !== 'Custom') {
+        console.log(selectedProfile)
+        const profile = predefinedProfiles[selectedProfile];
+        console.log(profile)
+        fields.forEach(field => {
+            document.getElementById(field).value = profile[field];
+        });
+    }
+});
 function toggleCustom(field) {
     var select = document.getElementById(field);
     var custom = document.getElementById('custom_' + field);

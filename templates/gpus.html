@@ -529,8 +529,8 @@ function updateButtonText() {
                 document.querySelector('.fullscreen-modal').remove();
                 alert("GPU added successfully!");
              
-                const newGPUCard = createGPUCard(data.gpu);
-                gpuGrid.insertBefore(newGPUCard, gpuGrid.firstChild);
+                // const newGPUCard = createGPUCard(data.gpu);
+                // gpuGrid.insertBefore(newGPUCard, gpuGrid.firstChild);
             } else {
                 alert("Error adding GPU: " + data.error);
             }

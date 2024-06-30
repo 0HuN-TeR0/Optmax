@@ -574,6 +574,7 @@ def save_preferences():
     if 'user_id' not in session:
         flash('Please login to access page', 'warning')
         return redirect(url_for('login'))
+    user = User.query.get(session['user_id'])
     try:
         price_range = request.form.get('price')
         mem_size = request.form.get('mem_size')
@@ -585,7 +586,7 @@ def save_preferences():
 
         # Check if the user already has preferences
         preference = Preference.query.filter_by(
-            user_id=current_user.id).first()
+            user_id=user.id).first()
 
         if preference:
             # Update existing preferences
@@ -599,18 +600,19 @@ def save_preferences():
         else:
             # Create new preferences
             preference = Preference(
-                user_id=current_user.id,
+                user_id=user.id,
                 price_range=price_range,
                 mem_size=mem_size,
                 gpu_clock_range=gpu_clock_range,
                 mem_clock_range=mem_clock_range,
                 unified_shader_range=unified_shader_range,
                 release_year=release_year,
-                mem_type=mem_type
+                mem_type=mem_type,
             )
             db.session.add(preference)
+            db.session.commit()
+            db.session.refresh(preference)
 
-        db.session.commit()
         return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
