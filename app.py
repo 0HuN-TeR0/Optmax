@@ -162,7 +162,7 @@ class RegistrationForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin'),('general','General')], validators=[DataRequired()])
+    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin'),('editor','Editor')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 
@@ -179,45 +179,6 @@ class GPUForm(FlaskForm):
 @app.route('/')
 def home():
     return render_template('index.html')
-# @app.route('/gpus', methods=['GET'])
-# def gpus():
-#     offset = request.args.get('offset', default=0, type=int)
-#     limit = request.args.get('limit', default=6, type=int)
-#     gpus = GPU.query.offset(offset).limit(limit).all()
-#     gpu_data = [{
-#         'id': gpu.id,
-#         'manufacturer': gpu.manufacturer,
-#         'productname': gpu.productname,
-#         'price': gpu.price,
-#         'picture': gpu.picture,
-#         'memSize': gpu.memsize,
-#         'gpuClock': gpu.gpuclock,
-#         'memClock': gpu.memclock,
-#         'unifiedShader': gpu.unifiedshader,
-#         'releaseYear': gpu.releaseyear,
-#         'memType': gpu.memtype,
-#         'memBusWidth': gpu.membuswidth,
-#         'rop': gpu.rop,
-#         'pixelShader': gpu.pixelshader,
-#         'vertexShader': gpu.vertexshader,
-#         'igp': gpu.igp,
-#         'bus': gpu.bus,
-#         'gpuChip': gpu.gpuchip,
-#         'G3Dmark': gpu.g3dmark,
-#         'G2Dmark': gpu.g2dmark,
-#         'gpuValue': gpu.gpuvalue,
-#         'TDP': gpu.tdp,
-#         'powerPerformance': gpu.powerperformance,
-#         'testDate': gpu.testdate,
-#         'category': gpu.category
-#     } for gpu in gpus]
-#     more_gpus = GPU.query.count() > offset + limit
-#     next_offset = offset + limit if more_gpus else None
-    
-#     return render_template('gpus.html', 
-#                            gpus=gpu_data, 
-#                            more_gpus=more_gpus, 
-#                            next_offset=next_offset)
 
 @app.route('/gpus', methods=['GET'])
 def gpus():
@@ -556,6 +517,7 @@ def register():
             app.logger.error(f"Error during registration: {str(e)}")
     
     return render_template('register.html', form=form)
+
 def logout():
     session.pop('user_id', None)
     flash('You have been logged out', 'info')
