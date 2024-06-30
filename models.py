@@ -18,12 +18,13 @@ class Preference(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     price_range = db.Column(db.String(50))
-    mem_size = db.Column(db.Integer)
+    mem_size = db.Column(db.String(50))  # Changed to String
     gpu_clock_range = db.Column(db.String(50))
     mem_clock_range = db.Column(db.String(50))
     unified_shader_range = db.Column(db.String(50))
-    release_year = db.Column(db.Integer)
+    release_year = db.Column(db.String(50))  # Changed to String
     mem_type = db.Column(db.String(50))
+
 
 
 class GPU(db.Model):

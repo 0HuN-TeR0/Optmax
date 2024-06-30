@@ -169,26 +169,28 @@ def recommend_gpu(user_input, user=None):
         # Check if the user has a preference
         preference = Preference.query.filter_by(user_id=user.id).first()
         if preference:
-            # If the user has a preference, use it to update the user_input
-            user_input['price'] = float(preference.price_range)
-            user_input['memSize'] = float(preference.mem_size)
-            user_input['gpuClock'] = float(preference.gpu_clock)
-            user_input['memClock'] = float(preference.mem_clock)
-            user_input['unifiedShader'] = float(preference.unified_shader)
-            user_input['releaseYear'] = float(preference.release_year)
-            user_input['memType'] = float(
-                label_encoder.transform([preference.mem_type])[0])
-
+            # Convert preferences to correct data types
+            price_range_min, price_range_max = map(float, preference.price_range.split('-'))
+            mem_size = float(preference.mem_size.replace('Less than ', ''))
+            gpu_clock = float(preference.gpu_clock_range.split('-')[1])
+            mem_clock = float(preference.mem_clock_range.split('-')[1])
+            unified_shader = float(preference.unified_shader_range.split('-')[1])
+            release_year = float(preference.release_year)
+            mem_type = float(label_encoder.transform([preference.mem_type])[0])
+            
             # Combine the user's preference with the new input
             updated_input = {
-                'price': (user_input['price'] + preference.price_range) / 2,
-                'memSize': (user_input['memSize'] + preference.mem_size) / 2,
-                'gpuClock': (user_input['gpuClock'] + preference.gpu_clock) / 2,
-                'memClock': (user_input['memClock'] + preference.mem_clock) / 2,
-                'unifiedShader': (user_input['unifiedShader'] + preference.unified_shader) / 2,
-                'releaseYear': (user_input['releaseYear'] + preference.release_year) / 2,
-                'memType': (user_input['memType'] + float(label_encoder.transform([preference.mem_type])[0])) / 2
+                'price': (user_input['price'] + (price_range_min + price_range_max) / 2) / 2,
+                'memSize': (user_input['memSize'] + mem_size) / 2,
+                'gpuClock': (user_input['gpuClock'] + gpu_clock) / 2,
+                'memClock': (user_input['memClock'] + mem_clock) / 2,
+                'unifiedShader': (user_input['unifiedShader'] + unified_shader) / 2,
+                'releaseYear': (user_input['releaseYear'] + release_year) / 2,
+                'memType': (user_input['memType'] + mem_type) / 2
             }
+        else:
+            # If no user is authenticated or the user has no preference, use the original user_input
+            updated_input = user_input
     else:
         # If no user is authenticated or the user has no preference, use the original user_input
         updated_input = user_input
@@ -208,6 +210,7 @@ def recommend_gpu(user_input, user=None):
         lambda x: f'<a href="/gpus/{x}">Details</a>')
 
     return recommendations
+
 
 
 class RegistrationForm(FlaskForm):
@@ -567,14 +570,15 @@ def for_you():
                            recommendations=recommendations,
                            predefined_profiles=predefined_profiles)
 
-
 @app.route('/save_preferences', methods=['POST'])
 # @login_required
 def save_preferences():
     if 'user_id' not in session:
         flash('Please login to access page', 'warning')
         return redirect(url_for('login'))
+
     user = User.query.get(session['user_id'])
+
     try:
         price_range = request.form.get('price')
         mem_size = request.form.get('mem_size')
@@ -584,40 +588,27 @@ def save_preferences():
         release_year = request.form.get('release_year')
         mem_type = request.form.get('mem_type')
 
-        # Check if the user already has preferences
-        preference = Preference.query.filter_by(
-            user_id=user.id).first()
-
-        if preference:
-            # Update existing preferences
-            preference.price_range = price_range
-            preference.mem_size = mem_size
-            preference.gpu_clock_range = gpu_clock_range
-            preference.mem_clock_range = mem_clock_range
-            preference.unified_shader_range = unified_shader_range
-            preference.release_year = release_year
-            preference.mem_type = mem_type
-        else:
-            # Create new preferences
-            preference = Preference(
-                user_id=user.id,
-                price_range=price_range,
-                mem_size=mem_size,
-                gpu_clock_range=gpu_clock_range,
-                mem_clock_range=mem_clock_range,
-                unified_shader_range=unified_shader_range,
-                release_year=release_year,
-                mem_type=mem_type,
-            )
-            db.session.add(preference)
-            db.session.commit()
-            db.session.refresh(preference)
+        # Create new preferences
+        preference = Preference(
+            user_id=user.id,
+            price_range=price_range,
+            mem_size=mem_size,
+            gpu_clock_range=gpu_clock_range,
+            mem_clock_range=mem_clock_range,
+            unified_shader_range=unified_shader_range,
+            release_year=release_year,
+            mem_type=mem_type,
+        )
+        db.session.add(preference)
+        db.session.commit()
+        db.session.refresh(preference)
 
         return jsonify(success=True)
     except Exception as e:
         db.session.rollback()
         print(f"Error saving preferences: {str(e)}")
         return jsonify(success=False), 500
+
 
 
 @app.route('/login', methods=['GET', 'POST'])
