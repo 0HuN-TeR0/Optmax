@@ -469,7 +469,6 @@ def add_blog():
     
 
 
-
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
     recommendations = None
@@ -478,87 +477,48 @@ def for_you():
 
         # Check if a predefined profile is selected
         selected_profile = request.form.get('profile', 'Custom')
-        if (selected_profile != 'Custom'):
+        if selected_profile != 'Custom':
             profile = predefined_profiles[selected_profile]
         else:
             profile = None
 
-        # Price
+        # Extract form data
         price_input = profile['price'] if profile else request.form['price']
-        if price_input == 'Custom':
-            price = float(request.form['custom_price'])
-        else:
-            try:
-                price = float(price_input.split('-')[1])
-            except (IndexError, ValueError):
-                price = float(price_input.split('+')[0])
+        price = float(request.form['custom_price']) if price_input == 'Custom' else float(price_input.split('-')[1]) if '-' in price_input else float(price_input.split('+')[0])
         user_input.append(price)
 
-        # Memory Size
         mem_size_input = profile['mem_size'] if profile else request.form['mem_size']
-        if mem_size_input == 'Custom':
-            mem_size = float(request.form['custom_mem_size'])
-        elif mem_size_input == 'Less than 1':
-            mem_size = 0.5
-        else:
-            mem_size = float(mem_size_input)
+        mem_size = float(request.form['custom_mem_size']) if mem_size_input == 'Custom' else 0.5 if mem_size_input == 'Less than 1' else float(mem_size_input)
         user_input.append(mem_size)
 
-        # GPU Clock
         gpu_clock_input = profile['gpu_clock'] if profile else request.form['gpu_clock']
-        if gpu_clock_input == 'Custom':
-            gpu_clock = float(request.form['custom_gpu_clock'])
-        else:
-            try:
-                gpu_clock = float(gpu_clock_input.split('-')[1])
-            except (IndexError, ValueError):
-                gpu_clock = float(gpu_clock_input.split('+')[0])
+        gpu_clock = float(request.form['custom_gpu_clock']) if gpu_clock_input == 'Custom' else float(gpu_clock_input.split('-')[1]) if '-' in gpu_clock_input else float(gpu_clock_input.split('+')[0])
         user_input.append(gpu_clock)
 
-        # Memory Clock
         mem_clock_input = profile['mem_clock'] if profile else request.form['mem_clock']
-        if mem_clock_input == 'Custom':
-            mem_clock = float(request.form['custom_mem_clock'])
-        else:
-            try:
-                mem_clock = float(mem_clock_input.split('-')[1])
-            except (IndexError, ValueError):
-                mem_clock = float(mem_clock_input.split('+')[0])
+        mem_clock = float(request.form['custom_mem_clock']) if mem_clock_input == 'Custom' else float(mem_clock_input.split('-')[1]) if '-' in mem_clock_input else float(mem_clock_input.split('+')[0])
         user_input.append(mem_clock)
 
-        # Unified Shader
         unified_shader_input = profile['unified_shader'] if profile else request.form['unified_shader']
-        if unified_shader_input == 'Custom':
-            unified_shader = float(request.form['custom_unified_shader'])
-        else:
-            try:
-                unified_shader = float(unified_shader_input.split('-')[1])
-            except (IndexError, ValueError):
-                unified_shader = float(unified_shader_input.split('+')[0])
+        unified_shader = float(request.form['custom_unified_shader']) if unified_shader_input == 'Custom' else float(unified_shader_input.split('-')[1]) if '-' in unified_shader_input else float(unified_shader_input.split('+')[0])
         user_input.append(unified_shader)
 
-        # Release Year
         release_year_input = profile['release_year'] if profile else request.form['release_year']
-        if release_year_input == 'Custom':
-            release_year = int(request.form['custom_release_year'])
-        else:
-
-            release_year = int(release_year_input)
+        release_year = int(request.form['custom_release_year']) if release_year_input == 'Custom' else int(release_year_input)
         user_input.append(release_year)
 
-        # Memory Type
         mem_type_input = profile['mem_type'] if profile else request.form['mem_type']
-        if mem_type_input == 'Custom':
-            mem_type = request.form['custom_mem_type']
-        else:
-            mem_type = mem_type_input
+        mem_type = request.form['custom_mem_type'] if mem_type_input == 'Custom' else mem_type_input
         user_input.append(label_encoder.transform([mem_type])[0])
 
-        # Ensure all inputs are valid numbers
-        user_input = [float(x) if isinstance(
-            x, (int, float)) else 0 for x in user_input]
+        user_input = [float(x) if isinstance(x, (int, float)) else 0 for x in user_input]
         recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
                                                      'memClock', 'unifiedShader', 'releaseYear', 'memType', 'details_link']].to_html(escape=False)
+
+        # Check for AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return recommendations
+
     return render_template('for_you.html',
                            price_ranges=price_ranges,
                            mem_size_range=mem_size_range,
@@ -570,16 +530,18 @@ def for_you():
                            recommendations=recommendations,
                            predefined_profiles=predefined_profiles)
 
+
 @app.route('/save_preferences', methods=['POST'])
-# @login_required
 def save_preferences():
     if 'user_id' not in session:
-        flash('Please login to access page', 'warning')
+        flash('Please login to access this page', 'warning')
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
+    log_file_path = request.form.get('log_file_path')
 
     try:
+        # Extract form data
         price_range = request.form.get('price')
         mem_size = request.form.get('mem_size')
         gpu_clock_range = request.form.get('gpu_clock')
@@ -587,9 +549,45 @@ def save_preferences():
         unified_shader_range = request.form.get('unified_shader')
         release_year = request.form.get('release_year')
         mem_type = request.form.get('mem_type')
+        custom_price = request.form.get('custom_price')
+        custom_mem_size = request.form.get('custom_mem_size')
+        custom_gpu_clock = request.form.get('custom_gpu_clock')
+        custom_mem_clock = request.form.get('custom_mem_clock')
+        custom_unified_shader = request.form.get('custom_unified_shader')
+        custom_release_year = request.form.get('custom_release_year')
+        custom_mem_type = request.form.get('custom_mem_type')
 
-        # Create new preferences
-        preference = Preference(
+        # Prepare preferences dictionary
+        preferences = {
+            'price_range': price_range,
+            'custom_price': custom_price,
+            'mem_size': mem_size,
+            'custom_mem_size': custom_mem_size,
+            'gpu_clock_range': gpu_clock_range,
+            'custom_gpu_clock': custom_gpu_clock,
+            'mem_clock_range': mem_clock_range,
+            'custom_mem_clock': custom_mem_clock,
+            'unified_shader_range': unified_shader_range,
+            'custom_unified_shader': custom_unified_shader,
+            'release_year': release_year,
+            'custom_release_year': custom_release_year,
+            'mem_type': mem_type,
+            'custom_mem_type': custom_mem_type,
+        }
+
+        # Log preferences to a file
+        if log_file_path:
+            try:
+                with open(log_file_path, 'a') as log_file:
+                    log_file.write(f"{preferences}\n")
+            except IOError as e:
+                return jsonify(success=False, message=f'Error writing to log file: {str(e)}'), 500
+
+        # Check if the user already has preferences
+        existing_preference = Preference.query.filter_by(user_id=user.id).order_by(Preference.id.desc()).first()
+
+        # Prepare new preferences
+        new_preference = Preference(
             user_id=user.id,
             price_range=price_range,
             mem_size=mem_size,
@@ -599,17 +597,49 @@ def save_preferences():
             release_year=release_year,
             mem_type=mem_type,
         )
-        db.session.add(preference)
-        db.session.commit()
-        db.session.refresh(preference)
 
-        return jsonify(success=True)
+        if existing_preference and (
+            existing_preference.price_range == new_preference.price_range and
+            existing_preference.mem_size == new_preference.mem_size and
+            existing_preference.gpu_clock_range == new_preference.gpu_clock_range and
+            existing_preference.mem_clock_range == new_preference.mem_clock_range and
+            existing_preference.unified_shader_range == new_preference.unified_shader_range and
+            existing_preference.release_year == new_preference.release_year and
+            existing_preference.mem_type == new_preference.mem_type
+        ):
+            # If preferences are the same, just display success
+            return jsonify(success=True, message='No changes to preferences.')
+
+        # Save new preferences if they are different
+        db.session.add(new_preference)
+        db.session.commit()
+        db.session.refresh(new_preference)
+
+        return jsonify(success=True, message='Preferences saved successfully.')
     except Exception as e:
         db.session.rollback()
         print(f"Error saving preferences: {str(e)}")
-        return jsonify(success=False), 500
+        return jsonify(success=False, message='Error saving preferences.'), 500
 
+@app.route('/get_preferences', methods=['POST'])
+def get_preferences():
+    log_file_path = request.form.get('log_file_path')
+    if not log_file_path or not os.path.exists(log_file_path):
+        return jsonify({'success': False, 'message': 'Log file does not exist.'})
 
+    # Read from the log file
+    try:
+        with open(log_file_path, 'r') as log_file:
+            preferences = log_file.readlines()
+        
+        # Parse the last entry in the log file
+        last_preferences = preferences[-1] if preferences else '{}'
+        last_preferences_dict = eval(last_preferences)  # Convert string to dictionary
+
+    except IOError as e:
+        return jsonify({'success': False, 'message': f'Error reading from log file: {str(e)}'})
+
+    return jsonify({'success': True, 'message': 'Preferences loaded successfully.', 'preferences': last_preferences_dict})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -653,8 +683,13 @@ def register():
 
 @app.route("/logout")
 def logout():
+    # Clear the log file data
+    log_file_path = 'preferences_log.txt'
+    open(log_file_path, 'w').close()  # Truncate the log file
+
+    # Clear the user session
     session.pop('user_id', None)
-    # logout_user()
+    session.pop('username', None)
     flash('You have been logged out', 'info')
     return redirect(url_for('login'))
 
