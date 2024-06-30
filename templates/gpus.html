@@ -146,8 +146,8 @@
 
     .modal-close {
         position: absolute;
-        top: 10px;
-        right: 20px;
+        top: -5px;
+        right: 12px;
         font-size: 2rem;
         cursor: pointer;
     }
@@ -159,7 +159,7 @@
     }
 
     .product-image {
-        flex: 1;
+        flex: auto;
         min-width: 300px;
     }
 
@@ -202,7 +202,7 @@
                 {% for gpu in gpus %}
                 <div class="gpu-card" data-id="{{ gpu.id }}">
                     <!-- remove s in gpus for real image -->
-                    <img src="{{ gpu.picture if gpus.picture else 'https://via.placeholder.com/300x200' }}" alt="{{ gpu.productname }}">
+                    <img src="{{ gpu.picture if gpu.picture else 'https://via.placeholder.com/300x200' }}" alt="{{ gpu.productname }}">
                     <h3>{{ gpu.productname }}</h3>
                     <p>Manufacturer: {{ gpu.manufacturer }}</p>
                     <p>Price: ${{ gpu.price }}</p>
@@ -364,7 +364,7 @@ document.addEventListener("DOMContentLoaded", function() {
         gpuCard.dataset.id = gpu.id;
 
         gpuCard.innerHTML = `
-            <img src="${gpu.picture ? `/static/uploads/${gpu.picture}` : "https://via.placeholder.com/300x200"}" alt="${gpu.productname}">
+            <img src="${gpu.picture ? `${gpu.picture}` : "https://via.placeholder.com/300x200"}" alt="${gpu.productname}">
             <h3>${gpu.productname}</h3>
             <p>Manufacturer: ${gpu.manufacturer}</p>
             <p>Price: $${gpu.price}</p>
@@ -425,10 +425,13 @@ function updateButtonText() {
         fetch(`/gpu/${gpuId}`)
             .then(response => response.json())
             .then(gpu => {
+                
+                // const nvidia_url = "https://cdn.wccftech.com/wp-content/uploads/2023/09/NVIDIA-MLPerf-Inference-v3.1-Hopper-H100-Grace-Hopper-GH200-L4-GPU-Performance-_W-_2-g-standard-scale-4_00x-Custom.png"
+                // const amd_url = "https://www.amd.com/content/dam/amd/en/images/products/graphics/2562591-amd-radeon-chip.jpg"
                 const content = `
                     <div class="product-info">
                         <div class="product-image">
-                            <img src="${gpu.picture ? '/static/uploads/' + gpu.picture : 'https://via.placeholder.com/300x200'}" alt="${gpu.productname}">
+                            <img src="${gpu.picture}" alt="${gpu.productname}">
                         </div>
                         <div class="product-details">
                             <h2>${gpu.productname}</h2>
