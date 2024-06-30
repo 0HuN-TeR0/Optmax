@@ -40,7 +40,7 @@ from extensions import db, migrate
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or '486837'
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL') or 'postgresql://postgres:1234@localhost/opt-max'
+        'DATABASE_URL') or 'postgresql://postgres:486837@localhost/opt-max'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = 'static/uploads'
 

@@ -16,6 +16,10 @@
         font-size: 2.5rem;
     }
 
+    .form-group{
+        padding: 1em;
+    }
+
     .gpu-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -112,6 +116,18 @@
     #gpu-form form label, 
     #gpu-form form input {
         margin-bottom: 1rem;
+    }
+
+    .add-gpu-submit {
+        font-size: 16px;
+        background-color: var(--nvidia-green);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        bottom: 20px;
+        right: 20px;
+        padding: 1rem;
     }
 
     #gpu-form form input[type="submit"] {
@@ -226,105 +242,129 @@
 </div>
 <div id="gpu-form" class="modal">
     <h2>Add GPU</h2>
-    <form id="gpu-form-data">
+    <form style="font-weight: bold;" id="gpu-form-data">
         <div class="form-group">
-            <label for="manufacturer">Manufacturer:</label>
+            <label for="manufacturer"> Manufacturer*: </label>
+            <br>
             <input type="text" id="manufacturer" name="manufacturer" required>
         </div>
         <div class="form-group">
-            <label for="productName">Product Name:</label>
+            <label for="productName">Product Name*:</label>
+            <br>
             <input type="text" id="productName" name="productName" required>
         </div>
         <div class="form-group">
             <label for="price">Price:</label>
+            <br>
             <input type="number" id="price" name="price" required>
         </div>
         <div class="form-group">
             <label for="memSize">Memory Size (GB):</label>
+            <br>
             <input type="number" id="memSize" name="memSize" required>
         </div>
         <div class="form-group">
             <label for="gpuClock">GPU Clock (MHz):</label>
+            <br>
             <input type="number" id="gpuClock" name="gpuClock" required>
         </div>
         <div class="form-group">
             <label for="memClock">Memory Clock (MHz):</label>
+            <br>
             <input type="number" id="memClock" name="memClock" required>
         </div>
         <div class="form-group">
             <label for="unifiedShader">Unified Shaders:</label>
+            <br>
             <input type="number" id="unifiedShader" name="unifiedShader" required>
         </div>
         <div class="form-group">
             <label for="releaseYear">Release Year:</label>
+            <br>
             <input type="number" id="releaseYear" name="releaseYear" required>
         </div>
         <div class="form-group">
             <label for="memType">Memory Type:</label>
+            <br>
             <input type="text" id="memType" name="memType" required>
         </div>
         <div class="form-group">
             <label for="memBusWidth">Memory Bus Width (bits):</label>
+            <br>
             <input type="number" id="memBusWidth" name="memBusWidth" required>
         </div>
         <div class="form-group">
             <label for="rop">ROPs:</label>
+            <br>
             <input type="number" id="rop" name="rop" required>
         </div>
         <div class="form-group">
             <label for="pixelShader">Pixel Shaders:</label>
+            <br>
             <input type="text" id="pixelShader" name="pixelShader" required>
         </div>
         <div class="form-group">
             <label for="vertexShader">Vertex Shaders:</label>
+            <br>
             <input type="text" id="vertexShader" name="vertexShader" required>
         </div>
         <div class="form-group">
             <label for="igp">IGP:</label>
+            <br>
             <input type="text" id="igp" name="igp" required>
         </div>
         <div class="form-group">
             <label for="bus">Bus Interface:</label>
+            <br>
             <input type="text" id="bus" name="bus" required>
         </div>
         <div class="form-group">
             <label for="gpuChip">GPU Chip:</label>
+            <br>
             <input type="text" id="gpuChip" name="gpuChip" required>
         </div>
         <div class="form-group">
             <label for="G3Dmark">G3D Mark:</label>
+            <br>
             <input type="number" id="G3Dmark" name="G3Dmark" required>
         </div>
         <div class="form-group">
             <label for="G2Dmark">G2D Mark:</label>
+            <br>
             <input type="number" id="G2Dmark" name="G2Dmark" required>
         </div>
         <div class="form-group">
             <label for="gpuValue">GPU Value:</label>
+            <br>
             <input type="number" id="gpuValue" name="gpuValue" required>
         </div>
         <div class="form-group">
             <label for="TDP">TDP (W):</label>
+            <br>
             <input type="number" id="TDP" name="TDP" required>
         </div>
         <div class="form-group">
             <label for="powerPerformance">Power Performance:</label>
+            <br>
             <input type="number" id="powerPerformance" name="powerPerformance" required>
         </div>
         <div class="form-group">
             <label for="testDate">Test Date:</label>
+            <br>
             <input type="date" id="testDate" name="testDate" required>
         </div>
         <div class="form-group">
             <label for="category">Category:</label>
+            <br>
             <input type="text" id="category" name="category" required>
         </div>
         <div class="form-group">
             <label for="picture">Picture URL:</label>
+            <br>
             <input type="url" id="picture" name="picture" required>
         </div>
         <div class="form-group">
-            <input type="submit" value="Submit">
+            <input class="add-gpu-submit" type="submit" value="Submit">
         </div>
     </form>
 </div>
