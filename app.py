@@ -196,7 +196,6 @@ predefined_profiles = {
 # knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
 # knn.fit(X)
 
-
 def recommend_gpu(user_input, user=None):
     if user and user.is_authenticated:
         # Check if the user has a preference
@@ -214,15 +213,15 @@ def recommend_gpu(user_input, user=None):
             mem_type = float(label_encoder.transform([preference.mem_type])[0])
 
             # Combine the user's preference with the new input
-            updated_input = {
-                'price': (user_input['price'] + (price_range_min + price_range_max) / 2) / 2,
-                'memSize': (user_input['memSize'] + mem_size) / 2,
-                'gpuClock': (user_input['gpuClock'] + gpu_clock) / 2,
-                'memClock': (user_input['memClock'] + mem_clock) / 2,
-                'unifiedShader': (user_input['unifiedShader'] + unified_shader) / 2,
-                'releaseYear': (user_input['releaseYear'] + release_year) / 2,
-                'memType': (user_input['memType'] + mem_type) / 2
-            }
+            updated_input = [
+                (user_input[0] + (price_range_min + price_range_max) / 2) / 2,
+                (user_input[1] + mem_size) / 2,
+                (user_input[2] + gpu_clock) / 2,
+                (user_input[3] + mem_clock) / 2,
+                (user_input[4] + unified_shader) / 2,
+                (user_input[5] + release_year) / 2,
+                (user_input[6] + mem_type) / 2
+            ]
         else:
             # If no user is authenticated or the user has no preference, use the original user_input
             updated_input = user_input
@@ -230,10 +229,16 @@ def recommend_gpu(user_input, user=None):
         # If no user is authenticated or the user has no preference, use the original user_input
         updated_input = user_input
 
-    # Perform the recommendation based on the updated input
-    distances, indices = knn.kneighbors([updated_input])
+    # Normalize the input data
+    updated_input_normalized = scaler.transform([updated_input])
+
+    # Ensure updated_input_normalized is 2D
+    updated_input_normalized = updated_input_normalized.reshape(1, -1)
+
+    # Perform the recommendation based on the normalized input
+    distances, indices = knn.kneighbors(updated_input_normalized)
     
-        # Print the normalized distances
+    # Print the normalized distances
     print("\nNormalized distances between the user input and the nearest neighbors:")
     print(distances)
     
@@ -253,7 +258,7 @@ def recommend_gpu(user_input, user=None):
         recommendations = data.iloc[indices[0]]
     else:
         # If no matches are found, fall back to the regular recommendation
-        distances = ((X - updated_input) ** 2).sum(axis=1).argsort()
+        distances = ((X - updated_input_normalized) ** 2).sum(axis=1).argsort()
         recommendations = data.iloc[distances[:5]]
 
     # Assuming 'id' is the correct column name for GPU IDs
@@ -261,7 +266,6 @@ def recommend_gpu(user_input, user=None):
         lambda x: f'<a href="/gpus/{x}">Details</a>')
 
     return recommendations
-
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -588,6 +592,7 @@ def for_you():
 
         user_input = [float(x) if isinstance(
             x, (int, float)) else 0 for x in user_input]
+            
         recommendations_df = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
                                                         'memClock', 'unifiedShader', 'tmu', 'rop', 'releaseYear', 'G3Dmark', 'TDP', 'gpuValue', 'memType', 'details_link']]
         if 'user_id' in session:
