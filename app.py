@@ -31,7 +31,7 @@ from wtforms.validators import (
     DataRequired
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import NearestNeighbors
 from sqlalchemy.exc import SQLAlchemyError
 from dotenv import load_dotenv
@@ -82,7 +82,6 @@ def load_gpu_data():
             for gpu in gpu_data
         ])
         return data
-
 
 
 # Load and preprocess data
@@ -210,8 +209,7 @@ predefined_profiles = {
 # Define a function to recommend GPUs based on user input
 def recommend_gpu(user_input, user=None):
     X = data_log_normalized[features[2:]]
-    if user and user.is_authenticated:
-        # Check if the user has a preference
+    if user:        # Check if the user has a preference
         preference = Preference.query.filter_by(user_id=user.id).first()
         if preference:
             # Convert preferences to correct data types
@@ -235,6 +233,7 @@ def recommend_gpu(user_input, user=None):
                 (user_input[5] + release_year) / 2,
                 (user_input[6] + mem_type) / 2
             ]
+            updated_input.extend(user_input[7:])
         else:
             # If no user is authenticated or the user has no preference, use the original user_input
             updated_input = user_input
@@ -250,7 +249,7 @@ def recommend_gpu(user_input, user=None):
 
     # Perform the recommendation based on the normalized input
     distances, indices = knn.kneighbors(updated_input_log_normalized)
-    
+
     # Print the normalized distances
     print("\nLog-normalized distances between the user input and the nearest neighbors:")
     print(distances)
@@ -258,11 +257,13 @@ def recommend_gpu(user_input, user=None):
     # Normalize the distances to the range [0, 1]
     min_distance = distances.min()
     max_distance = distances.max()
-    distances_normalized = (distances - min_distance) / (max_distance - min_distance)
-    
+    distances_normalized = (distances - min_distance) / \
+        (max_distance - min_distance)
+
     # Apply log transformation to the normalized distances
-    distances_log_normalized = np.log1p(distances_normalized)  # log1p is used for log(1 + x)
-    
+    distances_log_normalized = np.log1p(
+        distances_normalized)  # log1p is used for log(1 + x)
+
     # Print the log-normalized distances
     print("\nLog-normalized distances between the user input and the nearest neighbors:")
     print(distances_log_normalized)
@@ -271,7 +272,8 @@ def recommend_gpu(user_input, user=None):
         recommendations = data.iloc[indices[0]]
     else:
         # If no matches are found, fall back to the regular recommendation
-        distances = ((X - updated_input_log_normalized) ** 2).sum(axis=1).argsort()
+        distances = ((X - updated_input_log_normalized)
+                     ** 2).sum(axis=1).argsort()
         recommendations = data.iloc[distances[:5]]
 
     # Assuming 'id' is the correct column name for GPU IDs
@@ -534,7 +536,12 @@ def add_blog():
 
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
+    user = None
     recommendations = None
+
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+
     if request.method == 'POST':
         user_input = []
 
@@ -607,9 +614,9 @@ def for_you():
 
         user_input = [float(x) if isinstance(
             x, (int, float)) else 0 for x in user_input]
-            
-        recommendations_df = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
-                                                        'memClock', 'unifiedShader', 'tmu', 'rop', 'releaseYear', 'G3Dmark', 'TDP', 'gpuValue', 'memType', 'details_link']]
+
+        recommendations_df = recommend_gpu(user_input, user)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
+                                                              'memClock', 'unifiedShader', 'tmu', 'rop', 'releaseYear', 'G3Dmark', 'TDP', 'gpuValue', 'memType', 'details_link']]
         if 'user_id' in session:
             print(session['user_id'])
             create_log(
@@ -825,4 +832,5 @@ def profile():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+    app.run(debug=True)
     app.run(debug=True)
