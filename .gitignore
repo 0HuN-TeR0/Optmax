@@ -2,4 +2,3 @@ venv/
 envr/
 __pycache__/
 .env
-preferences_log.txt

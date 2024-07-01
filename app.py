@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, UTC
 
+from flask_migrate import current
 import pandas as pd
 from flask import (
     Flask,
@@ -12,13 +13,13 @@ from flask import (
     session,
     jsonify,
 )
-from flask_login import (
-    current_user,
-    login_user,
-    logout_user,
-    login_required,
-    LoginManager,
-)
+# from flask_login import (
+#     current_user,
+#     login_user,
+#     logout_user,
+#     login_required,
+#     LoginManager,
+# )
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -42,12 +43,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models import User, GPU, Blog, Preference
 from extensions import db, migrate
+from log_utils import create_log
 
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or '486837'
     SQLALCHEMY_DATABASE_URI = os.environ.get(
-        'DATABASE_URL') or 'postgresql://postgres:486837@localhost/opt-max'
+        'DATABASE_URL') or 'postgresql://postgres:1234@localhost/opt-max'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     UPLOAD_FOLDER = 'static/uploads'
 
@@ -56,24 +58,6 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 migrate.init_app(app, db)
-login_manager = LoginManager()
-login_manager.init_app(app)
-
-
-@login_manager.user_loader
-def user_loader(email):
-    user = User.query.filter_by(email=email).first()
-    if user is None:
-        return
-    return user
-
-@login_manager.request_loader
-def request_loader(request):
-    email = request.form.get('email')
-    user = User.query.filter_by(email=email).first()
-    if user is None:
-        return
-    return user
 
 
 def load_gpu_data():
@@ -170,14 +154,16 @@ def recommend_gpu(user_input, user=None):
         preference = Preference.query.filter_by(user_id=user.id).first()
         if preference:
             # Convert preferences to correct data types
-            price_range_min, price_range_max = map(float, preference.price_range.split('-'))
+            price_range_min, price_range_max = map(
+                float, preference.price_range.split('-'))
             mem_size = float(preference.mem_size.replace('Less than ', ''))
             gpu_clock = float(preference.gpu_clock_range.split('-')[1])
             mem_clock = float(preference.mem_clock_range.split('-')[1])
-            unified_shader = float(preference.unified_shader_range.split('-')[1])
+            unified_shader = float(
+                preference.unified_shader_range.split('-')[1])
             release_year = float(preference.release_year)
             mem_type = float(label_encoder.transform([preference.mem_type])[0])
-            
+
             # Combine the user's preference with the new input
             updated_input = {
                 'price': (user_input['price'] + (price_range_min + price_range_max) / 2) / 2,
@@ -212,13 +198,14 @@ def recommend_gpu(user_input, user=None):
     return recommendations
 
 
-
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[('user', 'User'), ('admin', 'Admin'),('editor','Editor')], validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm Password', validators=[
+                                     DataRequired(), EqualTo('password')])
+    role = SelectField('Role', choices=[(
+        'user', 'User'), ('admin', 'Admin'), ('editor', 'Editor')], validators=[DataRequired()])
     submit = SubmitField('Sign Up')
 
 
@@ -234,6 +221,7 @@ class GPUForm(FlaskForm):
                        InputRequired(), NumberRange(min=0)])
     image = StringField('Image URL')  # Placeholder for file upload handling
 
+
 class BlogForm(FlaskForm):
     title = StringField('Title', validators=[InputRequired()])
     content = TextAreaField('Content', validators=[InputRequired()])
@@ -244,6 +232,7 @@ class BlogForm(FlaskForm):
 @app.route('/')
 def home():
     return render_template('index.html')
+
 
 @app.route('/gpus', methods=['GET'])
 def gpus():
@@ -414,8 +403,8 @@ def blogs():
     return render_template(
         'blogs.html',
         blogs=blog_list[::-1],
-        user = user_dict,
-        )
+        user=user_dict,
+    )
 
 
 @app.route('/add_blog', methods=["GET", "POST"])
@@ -434,14 +423,6 @@ def add_blog():
         return redirect(url_for('blogs'))
 
     form = BlogForm()
-    # print("*" * 100)
-    # print(form.category.data)
-    # print(dir(form))
-    # print(form.validate_on_submit())
-    # if not form.validate_on_submit():
-    #     return render_template('blogs.html')
-    
-    # print("_" * 100)
     new_blog = Blog(
         title=form.title.data,
         content=form.content.data,
@@ -461,12 +442,11 @@ def add_blog():
         return redirect(url_for('blogs'))
     new_blog_dict = new_blog.as_dict()
     res = {
-            "success": True,
-            "blog": new_blog_dict,
+        "success": True,
+        "blog": new_blog_dict,
     }
     return jsonify(res)
     # Convert blog objects to dictionaries with all necessary fields
-    
 
 
 @app.route('/for-you', methods=['GET', 'POST'])
@@ -484,40 +464,55 @@ def for_you():
 
         # Extract form data
         price_input = profile['price'] if profile else request.form['price']
-        price = float(request.form['custom_price']) if price_input == 'Custom' else float(price_input.split('-')[1]) if '-' in price_input else float(price_input.split('+')[0])
+        price = float(request.form['custom_price']) if price_input == 'Custom' else float(
+            price_input.split('-')[1]) if '-' in price_input else float(price_input.split('+')[0])
         user_input.append(price)
 
         mem_size_input = profile['mem_size'] if profile else request.form['mem_size']
-        mem_size = float(request.form['custom_mem_size']) if mem_size_input == 'Custom' else 0.5 if mem_size_input == 'Less than 1' else float(mem_size_input)
+        mem_size = float(request.form['custom_mem_size']
+                         ) if mem_size_input == 'Custom' else 0.5 if mem_size_input == 'Less than 1' else float(mem_size_input)
         user_input.append(mem_size)
 
         gpu_clock_input = profile['gpu_clock'] if profile else request.form['gpu_clock']
-        gpu_clock = float(request.form['custom_gpu_clock']) if gpu_clock_input == 'Custom' else float(gpu_clock_input.split('-')[1]) if '-' in gpu_clock_input else float(gpu_clock_input.split('+')[0])
+        gpu_clock = float(request.form['custom_gpu_clock']) if gpu_clock_input == 'Custom' else float(
+            gpu_clock_input.split('-')[1]) if '-' in gpu_clock_input else float(gpu_clock_input.split('+')[0])
         user_input.append(gpu_clock)
 
         mem_clock_input = profile['mem_clock'] if profile else request.form['mem_clock']
-        mem_clock = float(request.form['custom_mem_clock']) if mem_clock_input == 'Custom' else float(mem_clock_input.split('-')[1]) if '-' in mem_clock_input else float(mem_clock_input.split('+')[0])
+        mem_clock = float(request.form['custom_mem_clock']) if mem_clock_input == 'Custom' else float(
+            mem_clock_input.split('-')[1]) if '-' in mem_clock_input else float(mem_clock_input.split('+')[0])
         user_input.append(mem_clock)
 
         unified_shader_input = profile['unified_shader'] if profile else request.form['unified_shader']
-        unified_shader = float(request.form['custom_unified_shader']) if unified_shader_input == 'Custom' else float(unified_shader_input.split('-')[1]) if '-' in unified_shader_input else float(unified_shader_input.split('+')[0])
+        unified_shader = float(request.form['custom_unified_shader']) if unified_shader_input == 'Custom' else float(
+            unified_shader_input.split('-')[1]) if '-' in unified_shader_input else float(unified_shader_input.split('+')[0])
         user_input.append(unified_shader)
 
         release_year_input = profile['release_year'] if profile else request.form['release_year']
-        release_year = int(request.form['custom_release_year']) if release_year_input == 'Custom' else int(release_year_input)
+        release_year = int(request.form['custom_release_year']
+                           ) if release_year_input == 'Custom' else int(release_year_input)
         user_input.append(release_year)
 
         mem_type_input = profile['mem_type'] if profile else request.form['mem_type']
         mem_type = request.form['custom_mem_type'] if mem_type_input == 'Custom' else mem_type_input
         user_input.append(label_encoder.transform([mem_type])[0])
 
-        user_input = [float(x) if isinstance(x, (int, float)) else 0 for x in user_input]
-        recommendations = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
-                                                     'memClock', 'unifiedShader', 'releaseYear', 'memType', 'details_link']].to_html(escape=False)
+        user_input = [float(x) if isinstance(
+            x, (int, float)) else 0 for x in user_input]
+        recommendations_df = recommend_gpu(user_input)[['manufacturer', 'productName', 'price', 'memSize', 'gpuClock',
+                                                        'memClock', 'unifiedShader', 'releaseYear', 'memType', 'details_link']]
+        if 'user_id' in session:
+            print(session['user_id'])
+            create_log(
+                user_id=session['user_id'],
+                ts=datetime.now(UTC),
+                data=recommendations_df.to_dict()
+            )
 
-        # Check for AJAX request
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return recommendations
+        recommendations = recommendations_df.to_html(escape=False)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return recommendations
 
     return render_template('for_you.html',
                            price_ranges=price_ranges,
@@ -528,7 +523,8 @@ def for_you():
                            release_year_range=release_year_range,
                            mem_type_range=mem_type_range,
                            recommendations=recommendations,
-                           predefined_profiles=predefined_profiles)
+                           predefined_profiles=predefined_profiles,
+                           )
 
 
 @app.route('/save_preferences', methods=['POST'])
@@ -584,7 +580,8 @@ def save_preferences():
                 return jsonify(success=False, message=f'Error writing to log file: {str(e)}'), 500
 
         # Check if the user already has preferences
-        existing_preference = Preference.query.filter_by(user_id=user.id).order_by(Preference.id.desc()).first()
+        existing_preference = Preference.query.filter_by(
+            user_id=user.id).order_by(Preference.id.desc()).first()
 
         # Prepare new preferences
         new_preference = Preference(
@@ -621,6 +618,7 @@ def save_preferences():
         print(f"Error saving preferences: {str(e)}")
         return jsonify(success=False, message='Error saving preferences.'), 500
 
+
 @app.route('/get_preferences', methods=['POST'])
 def get_preferences():
     log_file_path = request.form.get('log_file_path')
@@ -631,15 +629,17 @@ def get_preferences():
     try:
         with open(log_file_path, 'r') as log_file:
             preferences = log_file.readlines()
-        
+
         # Parse the last entry in the log file
         last_preferences = preferences[-1] if preferences else '{}'
-        last_preferences_dict = eval(last_preferences)  # Convert string to dictionary
+        # Convert string to dictionary
+        last_preferences_dict = eval(last_preferences)
 
     except IOError as e:
         return jsonify({'success': False, 'message': f'Error reading from log file: {str(e)}'})
 
     return jsonify({'success': True, 'message': 'Preferences loaded successfully.', 'preferences': last_preferences_dict})
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -680,6 +680,7 @@ def register():
             app.logger.error(f"Error during registration: {str(e)}")
 
     return render_template('register.html', form=form)
+
 
 @app.route("/logout")
 def logout():
