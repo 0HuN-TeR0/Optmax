@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, UTC
 from sklearn.impute import KNNImputer
+import numpy as np
 
 from flask_migrate import current
 import pandas as pd
@@ -231,7 +232,22 @@ def recommend_gpu(user_input, user=None):
 
     # Perform the recommendation based on the updated input
     distances, indices = knn.kneighbors([updated_input])
+    
+        # Print the normalized distances
+    print("\nNormalized distances between the user input and the nearest neighbors:")
     print(distances)
+    
+    # Normalize the distances to the range [0, 1]
+    min_distance = distances.min()
+    max_distance = distances.max()
+    distances_normalized = (distances - min_distance) / (max_distance - min_distance)
+    
+    # Apply log transformation to the normalized distances
+    distances_log_normalized = np.log1p(distances_normalized)  # log1p is used for log(1 + x)
+    
+    # Print the log-normalized distances
+    print("\nLog-normalized distances between the user input and the nearest neighbors:")
+    print(distances_log_normalized)
 
     if len(indices[0]) > 0:
         recommendations = data.iloc[indices[0]]
