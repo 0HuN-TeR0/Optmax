@@ -144,6 +144,7 @@
             width: 100%;
             max-width: 1200px;
             color: white;
+            overflow-x: auto; /* Add horizontal scroll */
         }
 
         .recommendations h2 {
@@ -153,11 +154,11 @@
         .recommendations table {
             width: 100%;
             color: white;
+            border-collapse: collapse;
         }
 
         .recommendations table, .recommendations th, .recommendations td {
             border: 1px solid var(--nvidia-green);
-            border-collapse: collapse;
         }
 
         .recommendations th, .recommendations td {
@@ -184,131 +185,194 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>GPU Recommendation System</h1>
-    <form method="POST">
-        <input type="hidden" name="log_file_path" id="log_file_path" value="preferences_log.txt">
-
-        <h2>For Non-technical Users:</h2>
-        <label for="profile">Choose a profile:</label>
-        <select name="profile" id="profile">
-            <option value="Custom">Custom</option>
-            {% for profile in predefined_profiles %}
-            <option value="{{ profile }}">{{ profile }}</option>
-            {% endfor %}
-        </select>
-
-        <h2>Or Customize Your Preferences:</h2>
-
-        <label for="price">Price Range ($):</label>
-        <select id="price" name="price" onchange="toggleCustom('price')" required>
-            {% for range in price_ranges %}
-            <option value="{{ range }}">{{ range }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_price" name="custom_price" style="display: none;" placeholder="Enter custom price">
-
-        <label for="mem_size">Memory Size (GB):</label>
-        <select id="mem_size" name="mem_size" onchange="toggleCustom('mem_size')" required>
-            {% for size in mem_size_range %}
-            <option value="{{ size }}">{{ size }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_mem_size" name="custom_mem_size" style="display: none;" placeholder="Enter custom memory size">
-
-        <label for="gpu_clock">GPU Clock (MHz):</label>
-        <select id="gpu_clock" name="gpu_clock" onchange="toggleCustom('gpu_clock')" required>
-            {% for range in gpu_clock_range %}
-            <option value="{{ range }}">{{ range }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_gpu_clock" name="custom_gpu_clock" style="display: none;" placeholder="Enter custom GPU clock">
-
-        <label for="mem_clock">Memory Clock (MHz):</label>
-        <select id="mem_clock" name="mem_clock" onchange="toggleCustom('mem_clock')" required>
-            {% for range in mem_clock_range %}
-            <option value="{{ range }}">{{ range }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_mem_clock" name="custom_mem_clock" style="display: none;" placeholder="Enter custom memory clock">
-
-        <label for="unified_shader">Unified Shader:</label>
-        <select id="unified_shader" name="unified_shader" onchange="toggleCustom('unified_shader')" required>
-            {% for range in unified_shader_range %}
-            <option value="{{ range }}">{{ range }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_unified_shader" name="custom_unified_shader" style="display: none;" placeholder="Enter custom unified shader">
-
-        <label for="release_year">Release Year:</label>
-        <select id="release_year" name="release_year" onchange="toggleCustom('release_year')" required>
-            {% for year in release_year_range %}
-            <option value="{{ year }}">{{ year }}</option>
-            {% endfor %}
-        </select>
-        <input type="number" id="custom_release_year" name="custom_release_year" style="display: none;" placeholder="Enter custom release year">
-
-        <label for="mem_type">Memory Type:</label>
-        <select id="mem_type" name="mem_type" onchange="toggleCustom('mem_type')" required>
-            {% for type in mem_type_range %}
-            <option value="{{ type }}">{{ type }}</option>
-            {% endfor %}
-        </select>
-        <input type="text" id="custom_mem_type" name="custom_mem_type" style="display: none;" placeholder="Enter custom memory type">
-
-        <button type="button" id="savePreferences" class="nvidia-button">Save Preferences</button>
-        <button type="submit">Get Recommendations</button>
-    </form>
-    {% if recommendations %}
-    <div class="recommendations">
-        <h2>Recommended GPUs:</h2>
-        {{ recommendations|safe }}
+    <div class="container">
+        <h1>GPU Recommendation System</h1>
+        <form method="POST">
+            <input type="hidden" name="log_file_path" id="log_file_path" value="preferences_log.txt">
+    
+            <h2>For Non-technical Users:</h2>
+            <label for="profile">Choose a profile:</label>
+            <select name="profile" id="profile">
+                <option value="Custom">Custom</option>
+                {% for profile in predefined_profiles %}
+                <option value="{{ profile }}">{{ profile }}</option>
+                {% endfor %}
+            </select>
+    
+            <h2>Or Customize Your Preferences:</h2>
+    
+            <label for="price">Price Range ($):</label>
+            <select id="price" name="price" onchange="toggleCustom('price')" required>
+                {% for range in price_ranges %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_price" name="custom_price" style="display: none;" placeholder="Enter custom price">
+    
+            <label for="mem_size">Memory Size (GB):</label>
+            <select id="mem_size" name="mem_size" onchange="toggleCustom('mem_size')" required>
+                {% for size in mem_size_range %}
+                <option value="{{ size }}">{{ size }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_mem_size" name="custom_mem_size" style="display: none;" placeholder="Enter custom memory size">
+    
+            <label for="gpu_clock">GPU Clock (MHz):</label>
+            <select id="gpu_clock" name="gpu_clock" onchange="toggleCustom('gpu_clock')" required>
+                {% for range in gpu_clock_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_gpu_clock" name="custom_gpu_clock" style="display: none;" placeholder="Enter custom GPU clock">
+    
+            <label for="mem_clock">Memory Clock (MHz):</label>
+            <select id="mem_clock" name="mem_clock" onchange="toggleCustom('mem_clock')" required>
+                {% for range in mem_clock_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_mem_clock" name="custom_mem_clock" style="display: none;" placeholder="Enter custom memory clock">
+    
+            <label for="unified_shader">Unified Shader:</label>
+            <select id="unified_shader" name="unified_shader" onchange="toggleCustom('unified_shader')" required>
+                {% for range in unified_shader_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_unified_shader" name="custom_unified_shader" style="display: none;" placeholder="Enter custom unified shader">
+    
+            <label for="tmu">TMU:</label>
+            <select id="tmu" name="tmu" onchange="toggleCustom('tmu')" required>
+                {% for tmu in tmu_range %}
+                <option value="{{ tmu }}">{{ tmu }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_tmu" name="custom_tmu" style="display: none;" placeholder="Enter custom TMU">
+    
+            <label for="rop">ROP:</label>
+            <select id="rop" name="rop" onchange="toggleCustom('rop')" required>
+                {% for rop in rop_range %}
+                <option value="{{ rop }}">{{ rop }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_rop" name="custom_rop" style="display: none;" placeholder="Enter custom ROP">
+    
+            <label for="release_year">Release Year:</label>
+            <select id="release_year" name="release_year" onchange="toggleCustom('release_year')" required>
+                {% for year in release_year_range %}
+                <option value="{{ year }}">{{ year }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_release_year" name="custom_release_year" style="display: none;" placeholder="Enter custom release year">
+    
+            <label for="g3dmark">G3DMark Score:</label>
+            <select id="g3dmark" name="g3dmark" onchange="toggleCustom('g3dmark')" required>
+                {% for range in g3dmark_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_g3dmark" name="custom_g3dmark" style="display: none;" placeholder="Enter custom G3DMark score">
+    
+            <label for="tdp">TDP (W):</label>
+            <select id="tdp" name="tdp" onchange="toggleCustom('tdp')" required>
+                {% for range in tdp_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_tdp" name="custom_tdp" style="display: none;" placeholder="Enter custom TDP">
+    
+            <label for="gpu_value">GPU Value:</label>
+            <select id="gpu_value" name="gpu_value" onchange="toggleCustom('gpu_value')" required>
+                {% for range in gpu_value_range %}
+                <option value="{{ range }}">{{ range }}</option>
+                {% endfor %}
+            </select>
+            <input type="number" id="custom_gpu_value" name="custom_gpu_value" style="display: none;" placeholder="Enter custom GPU value">
+    
+            <label for="mem_type">Memory Type:</label>
+            <select id="mem_type" name="mem_type" onchange="toggleCustom('mem_type')" required>
+                {% for type in mem_type_range %}
+                <option value="{{ type }}">{{ type }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" id="custom_mem_type" name="custom_mem_type" style="display: none;" placeholder="Enter custom memory type">
+    
+            <button type="button" id="savePreferences" class="nvidia-button">Save Preferences</button>
+            <button type="submit">Get Recommendations</button>
+        </form>
+        {% if recommendations %}
+        <div class="recommendations">
+            <h2>Recommended GPUs:</h2>
+            <div style="overflow-x: auto;">
+                {{ recommendations|safe }}
+            </div>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
-</div>
 <script>
 const profileSelect = document.getElementById('profile');
-const fields = ['price', 'mem_size', 'gpu_clock', 'mem_clock', 'unified_shader', 'release_year', 'mem_type'];
+const fields = ['price', 'mem_size', 'gpu_clock', 'mem_clock', 'unified_shader', 'tmu', 'rop', 'release_year', 'g3dmark', 'tdp', 'gpu_value', 'mem_type'];
 const predefinedProfiles = {{ predefined_profiles|tojson|safe }};
 profileSelect.addEventListener('change', function() {
     const selectedProfile = this.value;
     if (selectedProfile !== 'Custom') {
         const profile = predefinedProfiles[selectedProfile];
         fields.forEach(field => {
-            document.getElementById(field).value = profile[field];
+            const select = document.getElementById(field);
+            if (select && profile[field]) {
+                select.value = profile[field];
+                toggleCustom(field);
+            }
         });
     }
 });
 function toggleCustom(field) {
     const select = document.getElementById(field);
     const custom = document.getElementById('custom_' + field);
-    if (select.value === 'Custom') {
-        custom.style.display = 'block';
-        custom.required = true;
-    } else {
-        custom.style.display = 'none';
-        custom.required = false;
+    if (select && custom) {
+        if (select.value === 'Custom') {
+            custom.style.display = 'block';
+            custom.required = true;
+        } else {
+            custom.style.display = 'none';
+            custom.required = false;
+        }
     }
 }
-document.getElementById('savePreferences').addEventListener('click', async function() {
-    const formData = new FormData(document.querySelector('form'));
-
-     const response = await fetch('/save_preferences', {
-        method: 'POST',
-        body: formData
+document.getElementById('savePreferences').addEventListener('click', function() {
+    const preferences = {};
+    fields.forEach(field => {
+        const select = document.getElementById(field);
+        const custom = document.getElementById('custom_' + field);
+        preferences[field] = select.value === 'Custom' ? custom.value : select.value;
     });
 
-    if (response.ok) {
-        const data = await response.json();
+    const logFilePath = document.getElementById('log_file_path').value;
+    
+    fetch('/save_preferences', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            preferences: preferences,
+            log_file_path: logFilePath
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
         if (data.success) {
-            alert(data.message);  // Display the success message
+            alert('Preferences saved successfully!');
         } else {
             alert('Error saving preferences. Please try again.');
         }
-    } else {
-        alert('Error saving preferences. Please try again.');
-    }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+        alert('An error occurred while saving preferences.');
+    });
 });
+
 </script>
 </body>
 </html>

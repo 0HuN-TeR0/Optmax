@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, UTC
-from sklearn.impute import KNNImputer
 
 from flask_migrate import current
 import pandas as pd
@@ -87,29 +86,18 @@ def load_gpu_data():
         return data
 
 
+
 # Load and preprocess data
 data = load_gpu_data()
 scaler = StandardScaler()
+features =['price', 'memSize', 'gpuClock', 'memClock',
+          'unifiedShader', 'releaseYear', 'memType']
+# Adjust label encoding
 label_encoder = LabelEncoder()
-
-# Select relevant features
-features = ['manufacturer', 'productName', 'memSize', 'unifiedShader', 'tmu', 'rop', 'memClock', 'gpuClock', 'releaseYear', 'G3Dmark', 'price', 'TDP', 'gpuValue', 'memType']
 data['memType'] = label_encoder.fit_transform(data['memType'])
 data_selected = data[features]
-data_normalized = pd.DataFrame(scaler.fit_transform(data_selected.drop(columns=['manufacturer', 'productName'])), columns=features[2:])
-# Select the features you need to impute (excluding categorical ones if any)
-features_to_impute = data_normalized[features[2:]]
-# Create an instance of KNNImputer and fit_transform the data
-imputer = KNNImputer(n_neighbors=5)
-data_imputed = imputer.fit_transform(features_to_impute)
-# Include the manufacturer and productName back into the dataframe
-data_normalized['manufacturer'] = data_selected['manufacturer'].values
-data_normalized['productName'] = data_selected['productName'].values
-# Replace the old data with imputed data in the DataFrame
-data_normalized[features[2:]] = data_imputed
-# Prepare the KNN model
-knn = NearestNeighbors(n_neighbors=5, algorithm='auto')
-knn.fit(data_normalized[features[2:]])
+data_normalized = pd.DataFrame(scaler.fit_transform(data_selected), columns=features)
+
 
 # Define ranges for each feature based on the dataset
 price_ranges = ['0-200', '201-400', '401-600', '601-800', '801-1000', '1001+', 'Custom']
@@ -190,10 +178,10 @@ predefined_profiles = {
 
 
 
-# X = data_normalized[['price', 'memSize', 'gpuClock', 'memClock',
-#           'unifiedShader', 'releaseYear', 'memType']]
-# knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
-# knn.fit(X)
+X = data_normalized[['price', 'memSize', 'gpuClock', 'memClock',
+          'unifiedShader', 'releaseYear', 'memType']]
+knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
+knn.fit(X)
 
 
 def recommend_gpu(user_input, user=None):
@@ -246,256 +234,6 @@ def recommend_gpu(user_input, user=None):
 
     return recommendations
 
-
-class RegistrationForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired()])
-    email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirm Password', validators=[
-                                     DataRequired(), EqualTo('password')])
-    role = SelectField('Role', choices=[(
-        'user', 'User'), ('admin', 'Admin'), ('editor', 'Editor')], validators=[DataRequired()])
-    submit = SubmitField('Sign Up')
-
-
-class LoginForm(FlaskForm):
-    email = StringField('Email', validators=[InputRequired(), Email()])
-    password = PasswordField('Password', validators=[InputRequired()])
-
-
-class GPUForm(FlaskForm):
-    name = StringField('Name', validators=[InputRequired()])
-    specs = TextAreaField('Specs', validators=[InputRequired()])
-    price = FloatField('Price', validators=[
-                       InputRequired(), NumberRange(min=0)])
-    image = StringField('Image URL')  # Placeholder for file upload handling
-
-
-class BlogForm(FlaskForm):
-    title = StringField('Title', validators=[InputRequired()])
-    content = TextAreaField('Content', validators=[InputRequired()])
-    category = StringField('Category', validators=[InputRequired()])
-    # image = StringField('Image URL')  # Placeholder for file upload handling
-
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-
-@app.route('/gpus', methods=['GET'])
-def gpus():
-    offset = request.args.get('offset', default=0, type=int)
-    limit = request.args.get('limit', default=6, type=int)
-    gpus = GPU.query.offset(offset).limit(limit).all()
-    gpu_data = [{
-        'id': gpu.id,
-        'manufacturer': gpu.manufacturer,
-        'productname': gpu.productname,
-        'price': gpu.price,
-        'picture': gpu.picture,
-        'memSize': gpu.memsize,
-        'gpuClock': gpu.gpuclock,
-        'memClock': gpu.memclock,
-        'unifiedShader': gpu.unifiedshader,
-        'releaseYear': gpu.releaseyear,
-        'memType': gpu.memtype,
-        'memBusWidth': gpu.membuswidth,
-        'rop': gpu.rop,
-        'pixelShader': gpu.pixelshader,
-        'vertexShader': gpu.vertexshader,
-        'igp': gpu.igp,
-        'bus': gpu.bus,
-        'gpuChip': gpu.gpuchip,
-        'G3Dmark': gpu.g3dmark,
-        'G2Dmark': gpu.g2dmark,
-        'gpuValue': gpu.gpuvalue,
-        'TDP': gpu.tdp,
-        'powerPerformance': gpu.powerperformance,
-        'testDate': gpu.testdate,
-        'category': gpu.category
-    } for gpu in gpus]
-    more_gpus = GPU.query.count() > offset + limit
-
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify(gpus=gpu_data, more_gpus=more_gpus)
-    else:
-        return render_template('gpus.html',
-                               gpus=gpu_data,
-                               more_gpus=more_gpus,
-                               next_offset=offset + limit if more_gpus else None)
-
-
-@app.route('/gpu/<int:id>', methods=['GET'])
-def gpu_details(id):
-    gpu = GPU.query.get_or_404(id)
-    gpu_data = {
-        'id': gpu.id,
-        'manufacturer': gpu.manufacturer,
-        'productname': gpu.productname,
-        'price': gpu.price,
-        'picture': gpu.picture,
-        'memsize': gpu.memsize,
-        'gpuclock': gpu.gpuclock,
-        'memclock': gpu.memclock,
-        'unifiedshader': gpu.unifiedshader,
-        'releaseyear': gpu.releaseyear,
-        'memtype': gpu.memtype,
-        'membuswidth': gpu.membuswidth,
-        'rop': gpu.rop,
-        'pixelshader': gpu.pixelshader,
-        'vertexshader': gpu.vertexshader,
-        'igp': gpu.igp,
-        'bus': gpu.bus,
-        'gpuchip': gpu.gpuchip,
-        'g3dmark': gpu.g3dmark,
-        'g2dmark': gpu.g2dmark,
-        'gpuvalue': gpu.gpuvalue,
-        'tdp': gpu.tdp,
-        'powerperformance': gpu.powerperformance,
-        'testdate': gpu.testdate,
-        'category': gpu.category
-    }
-    return jsonify(gpu_data)
-
-
-@app.route('/gpus/<int:id>', methods=['GET'])
-def gpus_details(id):
-    gpu = GPU.query.get_or_404(id)
-    gpu_data = {
-        'id': gpu.id,
-        'manufacturer': gpu.manufacturer,
-        'productname': gpu.productname,
-        'price': gpu.price,
-        'picture': gpu.picture,
-        'memsize': gpu.memsize,
-        'gpuclock': gpu.gpuclock,
-        'memclock': gpu.memclock,
-        'unifiedshader': gpu.unifiedshader,
-        'releaseyear': gpu.releaseyear,
-        'memtype': gpu.memtype,
-        'membuswidth': gpu.membuswidth,
-        'rop': gpu.rop,
-        'pixelshader': gpu.pixelshader,
-        'vertexshader': gpu.vertexshader,
-        'igp': gpu.igp,
-        'bus': gpu.bus,
-        'gpuchip': gpu.gpuchip,
-        'g3dmark': gpu.g3dmark,
-        'g2dmark': gpu.g2dmark,
-        'gpuvalue': gpu.gpuvalue,
-        'tdp': gpu.tdp,
-        'powerperformance': gpu.powerperformance,
-        'testdate': gpu.testdate,
-        'category': gpu.category
-    }
-    return render_template('gpu_details.html', gpu=gpu_data)
-
-
-@app.route('/add_gpu', methods=['POST'])
-def add_gpu():
-    data = request.form
-    new_gpu = GPU(
-        manufacturer=data['manufacturer'],
-        productname=data['productName'],
-        price=data['price'],
-        memsize=data['memSize'],
-        gpuclock=data['gpuClock'],
-        memclock=data['memClock'],
-        unifiedshader=data['unifiedShader'],
-        releaseyear=data['releaseYear'],
-        memtype=data['memType'],
-        picture=data['picture'],
-        membuswidth=data.get('memBusWidth'),
-        rop=data.get('rop'),
-        pixelshader=data.get('pixelShader'),
-        vertexshader=data.get('vertexShader'),
-        igp=bool(data.get('igp')),
-        bus=data.get('bus'),
-        gpuchip=data.get('gpuChip'),
-        g3dmark=data.get('G3Dmark'),
-        g2dmark=data.get('G2Dmark'),
-        gpuvalue=data.get('gpuValue'),
-        tdp=data.get('TDP'),
-        powerperformance=data.get('powerPerformance'),
-        testdate=data.get('testDate'),
-        category=data.get('category')
-    )
-    db.session.add(new_gpu)
-    db.session.commit()
-    return jsonify(success=True)
-
-
-@app.route('/blogs')
-def blogs():
-    blogs = Blog.query.all()
-
-    if 'user_id' not in session:
-        user_dict = {"role": "normal"}
-    else:
-        user = User.query.get(session['user_id'])
-        user_dict = {"role": user.role}
-
-    # Convert blog objects to dictionaries with all necessary fields
-    blog_list = []
-    for blog in blogs:
-        blog_dict = {
-            'title': blog.title,
-            'content': blog.content,
-            'author': blog.author,
-            'date': blog.date,
-            'category': blog.category,
-            # 'image_url': blog.image_url  # Assuming you have an image_url field
-        }
-        blog_list.append(blog_dict)
-
-    return render_template(
-        'blogs.html',
-        blogs=blog_list[::-1],
-        user=user_dict,
-    )
-
-
-@app.route('/add_blog', methods=["GET", "POST"])
-# @login_required
-def add_blog():
-    if request.method == "GET":
-        return redirect(url_for(''))
-
-    if 'user_id' not in session:
-        flash('Please login to access page', 'warning')
-        return redirect(url_for('login'))
-
-    user = User.query.get(session['user_id'])
-
-    if user.role not in {"admin", "editor"}:
-        return redirect(url_for('blogs'))
-
-    form = BlogForm()
-    new_blog = Blog(
-        title=form.title.data,
-        content=form.content.data,
-        author=user.email,
-        date=datetime.now(UTC),
-        category=form.category.data,
-    )
-    try:
-        db.session.add(new_blog)
-        db.session.commit()
-        db.session.refresh(new_blog)
-        flash('Blog added successful.', 'success')
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        flash('An error occurred. Please try again.', 'danger')
-        app.logger.error(f"Error during posting blog: {str(e)}")
-        return redirect(url_for('blogs'))
-    new_blog_dict = new_blog.as_dict()
-    res = {
-        "success": True,
-        "blog": new_blog_dict,
-    }
-    return jsonify(res)
-    # Convert blog objects to dictionaries with all necessary fields
 
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
@@ -716,71 +454,3 @@ def get_preferences():
 
     return jsonify({'success': True, 'message': 'Preferences loaded successfully.', 'preferences': last_preferences_dict})
 
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and check_password_hash(user.password, form.password.data):
-            session['user_id'] = user.id
-            # login_user(user=user)
-            flash('Login successful', 'success')
-            return redirect(url_for('profile'))
-        flash('Invalid email or password', 'danger')
-    return render_template('login.html', form=form)
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        existing_user = User.query.filter_by(email=form.email.data).first()
-        if existing_user:
-            flash('Email already registered. Please use a different email.', 'danger')
-            return render_template('register.html', form=form)
-
-        hashed_password = generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, email=form.email.data,
-                        password=hashed_password, role=form.role.data)
-
-        try:
-            db.session.add(new_user)
-            db.session.commit()
-            db.session.refresh(new_user)
-            flash('Registration successful. Please log in.', 'success')
-            return redirect(url_for('login'))
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            flash('An error occurred. Please try again.', 'danger')
-            app.logger.error(f"Error during registration: {str(e)}")
-
-    return render_template('register.html', form=form)
-
-
-@app.route("/logout")
-def logout():
-    # Clear the log file data
-    log_file_path = 'preferences_log.txt'
-    open(log_file_path, 'w').close()  # Truncate the log file
-
-    # Clear the user session
-    session.pop('user_id', None)
-    session.pop('username', None)
-    flash('You have been logged out', 'info')
-    return redirect(url_for('login'))
-
-
-@app.route('/profile')
-def profile():
-    if 'user_id' not in session:
-        flash('Please login to access your profile', 'warning')
-        return redirect(url_for('login'))
-    user = User.query.get(session['user_id'])
-    return render_template('profile.html', user=user)
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
