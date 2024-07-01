@@ -348,7 +348,7 @@ document.getElementById('savePreferences').addEventListener('click', function() 
     });
 
     const logFilePath = document.getElementById('log_file_path').value;
-    
+
     fetch('/save_preferences', {
         method: 'POST',
         headers: {
@@ -357,12 +357,12 @@ document.getElementById('savePreferences').addEventListener('click', function() 
         body: JSON.stringify({
             preferences: preferences,
             log_file_path: logFilePath
-        }),
+        })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('Preferences saved successfully!');
+            alert(data.message);
         } else {
             alert('Error saving preferences. Please try again.');
         }
