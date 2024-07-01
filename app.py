@@ -3,7 +3,6 @@ from datetime import datetime, UTC
 from sklearn.impute import KNNImputer
 import numpy as np
 
-from flask_migrate import current
 import pandas as pd
 from flask import (
     Flask,
@@ -15,13 +14,6 @@ from flask import (
     session,
     jsonify,
 )
-# from flask_login import (
-#     current_user,
-#     login_user,
-#     logout_user,
-#     login_required,
-#     LoginManager,
-# )
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
@@ -39,13 +31,17 @@ from wtforms.validators import (
     DataRequired
 )
 from werkzeug.security import generate_password_hash, check_password_hash
-from sklearn.preprocessing import LabelEncoder,StandardScaler
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.neighbors import NearestNeighbors
 from sqlalchemy.exc import SQLAlchemyError
+from dotenv import load_dotenv
 
 from models import User, GPU, Blog, Preference
 from extensions import db, migrate
 from log_utils import create_log
+
+
+load_dotenv()
 
 
 class Config:
@@ -88,40 +84,57 @@ def load_gpu_data():
         return data
 
 
+
 # Load and preprocess data
 data = load_gpu_data()
-scaler = StandardScaler()
 label_encoder = LabelEncoder()
 
 # Select relevant features
-features = ['manufacturer', 'productName', 'memSize', 'unifiedShader', 'tmu', 'rop', 'memClock', 'gpuClock', 'releaseYear', 'G3Dmark', 'price', 'TDP', 'gpuValue', 'memType']
+features = ['manufacturer', 'productName', 'memSize', 'unifiedShader', 'tmu', 'rop',
+            'memClock', 'gpuClock', 'releaseYear', 'G3Dmark', 'price', 'TDP', 'gpuValue', 'memType']
 data['memType'] = label_encoder.fit_transform(data['memType'])
 data_selected = data[features]
-data_normalized = pd.DataFrame(scaler.fit_transform(data_selected.drop(columns=['manufacturer', 'productName'])), columns=features[2:])
+
+# Apply log normalization to the data
+data_log_normalized = data_selected.copy()
+for column in data_log_normalized.columns[2:]:
+    data_log_normalized[column] = np.log1p(data_log_normalized[column])
+
 # Select the features you need to impute (excluding categorical ones if any)
-features_to_impute = data_normalized[features[2:]]
+features_to_impute = data_log_normalized[features[2:]]
+
 # Create an instance of KNNImputer and fit_transform the data
 imputer = KNNImputer(n_neighbors=5)
 data_imputed = imputer.fit_transform(features_to_impute)
+
 # Include the manufacturer and productName back into the dataframe
-data_normalized['manufacturer'] = data_selected['manufacturer'].values
-data_normalized['productName'] = data_selected['productName'].values
+data_log_normalized['manufacturer'] = data_selected['manufacturer'].values
+data_log_normalized['productName'] = data_selected['productName'].values
+
 # Replace the old data with imputed data in the DataFrame
-data_normalized[features[2:]] = data_imputed
+data_log_normalized[features[2:]] = data_imputed
+
 # Prepare the KNN model
 knn = NearestNeighbors(n_neighbors=5, algorithm='auto')
-knn.fit(data_normalized[features[2:]])
+knn.fit(data_log_normalized[features[2:]])
 
 # Define ranges for each feature based on the dataset
-price_ranges = ['0-200', '201-400', '401-600', '601-800', '801-1000', '1001+', 'Custom']
-mem_size_range = ['Less than 1', '1', '2', '4', '6', '8', '12', '16', '24', 'Custom']
-gpu_clock_range = ['0-200', '201-400', '401-600', '601-800', '801-1000', '1001-1200', '1200+', 'Custom']
-mem_clock_range = ['0-1000', '1001-2000', '2001-3000', '3001-4000', '4001-5000', '5000+', 'Custom']
-unified_shader_range = ['0-500', '501-1000', '1001-1500', '1501-2000', '2001-2500', '2500+', 'Custom']
+price_ranges = ['0-200', '201-400', '401-600',
+                '601-800', '801-1000', '1001+', 'Custom']
+mem_size_range = ['Less than 1', '1', '2',
+                  '4', '6', '8', '12', '16', '24', 'Custom']
+gpu_clock_range = ['0-200', '201-400', '401-600',
+                   '601-800', '801-1000', '1001-1200', '1200+', 'Custom']
+mem_clock_range = ['0-1000', '1001-2000', '2001-3000',
+                   '3001-4000', '4001-5000', '5000+', 'Custom']
+unified_shader_range = ['0-500', '501-1000', '1001-1500',
+                        '1501-2000', '2001-2500', '2500+', 'Custom']
 tmu_range = ['0-50', '51-100', '101-150', '151-200', '200+', 'Custom']
 rop_range = ['0-25', '26-50', '51-75', '76-100', '100+', 'Custom']
-release_year_range = sorted(set(int(year) for year in data['releaseYear'].unique())) + ['Custom']
-g3dmark_range = ['0-5000', '5001-10000', '10001-15000', '15001-20000', '20000+', 'Custom']
+release_year_range = sorted(
+    set(int(year) for year in data['releaseYear'].unique())) + ['Custom']
+g3dmark_range = ['0-5000', '5001-10000',
+                 '10001-15000', '15001-20000', '20000+', 'Custom']
 tdp_range = ['0-50', '51-100', '101-150', '151-200', '200+', 'Custom']
 gpu_value_range = ['0-20', '21-40', '41-60', '61-80', '80+', 'Custom']
 mem_type_range = list(label_encoder.classes_) + ['Custom']
@@ -189,14 +202,14 @@ predefined_profiles = {
 # Normalize the data
 
 
-
-
 # X = data_normalized[['price', 'memSize', 'gpuClock', 'memClock',
 #           'unifiedShader', 'releaseYear', 'memType']]
 # knn = NearestNeighbors(n_neighbors=5, metric='euclidean')
 # knn.fit(X)
 
+# Define a function to recommend GPUs based on user input
 def recommend_gpu(user_input, user=None):
+    X = data_log_normalized[features[2:]]
     if user and user.is_authenticated:
         # Check if the user has a preference
         preference = Preference.query.filter_by(user_id=user.id).first()
@@ -229,19 +242,19 @@ def recommend_gpu(user_input, user=None):
         # If no user is authenticated or the user has no preference, use the original user_input
         updated_input = user_input
 
-    # Normalize the input data
-    updated_input_normalized = scaler.transform([updated_input])
+    # Apply log normalization to the user input
+    updated_input_log_normalized = np.log1p(updated_input)
 
-    # Ensure updated_input_normalized is 2D
-    updated_input_normalized = updated_input_normalized.reshape(1, -1)
+    # Ensure updated_input_log_normalized is 2D
+    updated_input_log_normalized = updated_input_log_normalized.reshape(1, -1)
 
     # Perform the recommendation based on the normalized input
-    distances, indices = knn.kneighbors(updated_input_normalized)
+    distances, indices = knn.kneighbors(updated_input_log_normalized)
     
     # Print the normalized distances
-    print("\nNormalized distances between the user input and the nearest neighbors:")
+    print("\nLog-normalized distances between the user input and the nearest neighbors:")
     print(distances)
-    
+
     # Normalize the distances to the range [0, 1]
     min_distance = distances.min()
     max_distance = distances.max()
@@ -258,7 +271,7 @@ def recommend_gpu(user_input, user=None):
         recommendations = data.iloc[indices[0]]
     else:
         # If no matches are found, fall back to the regular recommendation
-        distances = ((X - updated_input_normalized) ** 2).sum(axis=1).argsort()
+        distances = ((X - updated_input_log_normalized) ** 2).sum(axis=1).argsort()
         recommendations = data.iloc[distances[:5]]
 
     # Assuming 'id' is the correct column name for GPU IDs
@@ -266,6 +279,7 @@ def recommend_gpu(user_input, user=None):
         lambda x: f'<a href="/gpus/{x}">Details</a>')
 
     return recommendations
+
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -517,6 +531,7 @@ def add_blog():
     return jsonify(res)
     # Convert blog objects to dictionaries with all necessary fields
 
+
 @app.route('/for-you', methods=['GET', 'POST'])
 def for_you():
     recommendations = None
@@ -608,7 +623,7 @@ def for_you():
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return recommendations
 
-    return render_template('for_you.html', recommendations=recommendations, 
+    return render_template('for_you.html', recommendations=recommendations,
                            price_ranges=price_ranges,
                            mem_size_range=mem_size_range,
                            gpu_clock_range=gpu_clock_range,
@@ -631,24 +646,29 @@ def save_preferences():
         return redirect(url_for('login'))
 
     user = User.query.get(session['user_id'])
-    log_file_path = request.form.get('log_file_path')
+    if not request.json:
+        return jsonify(success=False, message='Error saving preferences.'), 422
+
+    log_file_path = request.json.get('log_file_path')
+
+    pref_json_data = request.json.get('preferences')
 
     try:
-        # Extract form data
-        price_range = request.form.get('price')
-        mem_size = request.form.get('mem_size')
-        gpu_clock_range = request.form.get('gpu_clock')
-        mem_clock_range = request.form.get('mem_clock')
-        unified_shader_range = request.form.get('unified_shader')
-        release_year = request.form.get('release_year')
-        mem_type = request.form.get('mem_type')
-        custom_price = request.form.get('custom_price')
-        custom_mem_size = request.form.get('custom_mem_size')
-        custom_gpu_clock = request.form.get('custom_gpu_clock')
-        custom_mem_clock = request.form.get('custom_mem_clock')
-        custom_unified_shader = request.form.get('custom_unified_shader')
-        custom_release_year = request.form.get('custom_release_year')
-        custom_mem_type = request.form.get('custom_mem_type')
+        # Extract json data data
+        price_range = pref_json_data.get('price')
+        mem_size = pref_json_data.get('mem_size')
+        gpu_clock_range = pref_json_data.get('gpu_clock')
+        mem_clock_range = pref_json_data.get('mem_clock')
+        unified_shader_range = pref_json_data.get('unified_shader')
+        release_year = pref_json_data.get('release_year')
+        mem_type = pref_json_data.get('mem_type')
+        custom_price = pref_json_data.get('custom_price')
+        custom_mem_size = pref_json_data.get('custom_mem_size')
+        custom_gpu_clock = pref_json_data.get('custom_gpu_clock')
+        custom_mem_clock = pref_json_data.get('custom_mem_clock')
+        custom_unified_shader = pref_json_data.get('custom_unified_shader')
+        custom_release_year = pref_json_data.get('custom_release_year')
+        custom_mem_type = pref_json_data.get('custom_mem_type')
 
         # Prepare preferences dictionary
         preferences = {
@@ -677,8 +697,8 @@ def save_preferences():
                 return jsonify(success=False, message=f'Error writing to log file: {str(e)}'), 500
 
         # Check if the user already has preferences
-        existing_preference = Preference.query.filter_by(
-            user_id=user.id).order_by(Preference.id.desc()).first()
+        existing_preferences = Preference.query.filter_by(
+            user_id=user.id).all()
 
         # Prepare new preferences
         new_preference = Preference(
@@ -692,17 +712,18 @@ def save_preferences():
             mem_type=mem_type,
         )
 
-        if existing_preference and (
-            existing_preference.price_range == new_preference.price_range and
-            existing_preference.mem_size == new_preference.mem_size and
-            existing_preference.gpu_clock_range == new_preference.gpu_clock_range and
-            existing_preference.mem_clock_range == new_preference.mem_clock_range and
-            existing_preference.unified_shader_range == new_preference.unified_shader_range and
-            existing_preference.release_year == new_preference.release_year and
-            existing_preference.mem_type == new_preference.mem_type
-        ):
-            # If preferences are the same, just display success
-            return jsonify(success=True, message='No changes to preferences.')
+        for existing_preference in existing_preferences:
+            if existing_preference and (
+                existing_preference.price_range == new_preference.price_range and
+                existing_preference.mem_size == new_preference.mem_size and
+                existing_preference.gpu_clock_range == new_preference.gpu_clock_range and
+                existing_preference.mem_clock_range == new_preference.mem_clock_range and
+                existing_preference.unified_shader_range == new_preference.unified_shader_range and
+                existing_preference.release_year == new_preference.release_year and
+                existing_preference.mem_type == new_preference.mem_type
+            ):
+                # If preferences are the same, just display success
+                return jsonify(success=True, message='No changes to preferences.')
 
         # Save new preferences if they are different
         db.session.add(new_preference)
